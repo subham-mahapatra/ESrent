@@ -1,0 +1,135 @@
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface ICar extends Document {
+  brand: string;
+  model: string;
+  name: string;
+  year: number;
+  transmission: string;
+  fuel: string;
+  mileage: number;
+  dailyPrice: number;
+  images: string[];
+  description?: string;
+  features?: string[];
+  category?: string;
+  isAvailable?: boolean;
+  isFeatured?: boolean;
+  
+  // Legacy fields for backward compatibility
+  fuelType?: string;
+  type?: string;
+  available?: boolean;
+  featured?: boolean;
+  
+  // MongoDB specific fields
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const carSchema = new Schema<ICar>({
+  brand: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  model: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  name: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  year: {
+    type: Number,
+    required: true,
+    min: 1900,
+    max: new Date().getFullYear() + 1
+  },
+  transmission: {
+    type: String,
+    required: true,
+    enum: ['Automatic', 'Manual', 'CVT', 'Semi-Automatic']
+  },
+  fuel: {
+    type: String,
+    required: true,
+    enum: ['Petrol', 'Diesel', 'Electric', 'Hybrid', 'Plug-in Hybrid']
+  },
+  mileage: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  dailyPrice: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  images: [{
+    type: String,
+    required: true
+  }],
+  description: {
+    type: String,
+    trim: true
+  },
+  features: [{
+    type: String,
+    trim: true
+  }],
+  category: {
+    type: String,
+    trim: true
+  },
+  isAvailable: {
+    type: Boolean,
+    default: true
+  },
+  isFeatured: {
+    type: Boolean,
+    default: false
+  },
+  
+  // Legacy fields
+  fuelType: String,
+  type: String,
+  available: Boolean,
+  featured: Boolean
+}, {
+  timestamps: true,
+  toJSON: {
+    transform: function(doc, ret) {
+      ret.id = ret._id;
+      delete (ret as any)._id;
+      delete (ret as any).__v;
+      return ret;
+    }
+  }
+});
+
+// Create indexes for better performance
+carSchema.index({ brand: 1 });
+carSchema.index({ category: 1 });
+carSchema.index({ isFeatured: 1 });
+carSchema.index({ isAvailable: 1 });
+carSchema.index({ dailyPrice: 1 });
+carSchema.index({ name: 'text', brand: 'text', model: 'text' });
+
+let Car;
+try {
+  // Check if mongoose.models exists and Car is defined
+  if (mongoose.models && mongoose.models.Car) {
+    Car = mongoose.models.Car;
+  } else {
+    Car = mongoose.model<ICar>('Car', carSchema);
+  }
+} catch (err) {
+  // Fallback: define the model if not already defined
+  Car = mongoose.model<ICar>('Car', carSchema);
+}
+
+export { Car }; 

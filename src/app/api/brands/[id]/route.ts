@@ -1,0 +1,108 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { BrandService } from '@/lib/services/brandService';
+import { requireAdmin } from '@/lib/middleware/auth';
+
+interface RouteParams {
+  params: {
+    id: string;
+  };
+}
+
+export async function GET(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { id } = params;
+    
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Brand ID is required' },
+        { status: 400 }
+      );
+    }
+
+    const brand = await BrandService.getBrandById(id);
+    
+    if (!brand) {
+      return NextResponse.json(
+        { error: 'Brand not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(brand);
+  } catch (error) {
+    console.error('Error in GET /api/brands/[id]:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch brand' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(request: NextRequest, { params }: RouteParams) {
+  try {
+    // Check authentication
+    const authResult = await requireAdmin(request);
+    if (authResult) return authResult;
+
+    const { id } = params;
+    const body = await request.json();
+    
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Brand ID is required' },
+        { status: 400 }
+      );
+    }
+
+    const brand = await BrandService.updateBrand(id, body);
+    
+    if (!brand) {
+      return NextResponse.json(
+        { error: 'Brand not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(brand);
+  } catch (error) {
+    console.error('Error in PUT /api/brands/[id]:', error);
+    return NextResponse.json(
+      { error: 'Failed to update brand' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  try {
+    // Check authentication
+    const authResult = await requireAdmin(request);
+    if (authResult) return authResult;
+
+    const { id } = params;
+    
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Brand ID is required' },
+        { status: 400 }
+      );
+    }
+
+    const success = await BrandService.deleteBrand(id);
+    
+    if (!success) {
+      return NextResponse.json(
+        { error: 'Brand not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ message: 'Brand deleted successfully' });
+  } catch (error) {
+    console.error('Error in DELETE /api/brands/[id]:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete brand' },
+      { status: 500 }
+    );
+  }
+} 
