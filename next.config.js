@@ -4,6 +4,10 @@ const nextConfig = {
     optimizePackageImports: ['lucide-react', 'framer-motion']
   },
   images: {
+    domains: [
+      '1000logos.net',
+      'example.com',
+    ],
     remotePatterns: [
       {
         protocol: 'https',

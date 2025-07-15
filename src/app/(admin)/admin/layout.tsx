@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Menu } from 'lucide-react';
 import { Sidebar } from './components/Sidebar';
+import { useAuth } from '@/hooks/useApi';
 
 export default function AdminLayout({
   children,
@@ -14,10 +15,25 @@ export default function AdminLayout({
   const pathname = usePathname();
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { isAuthenticated, isInitialized } = useAuth();
 
   useEffect(() => {
     setLoading(false);
   }, []);
+
+  useEffect(() => {
+    if (pathname === '/admin/login' && isInitialized && isAuthenticated) {
+      router.replace('/admin');
+    }
+  }, [pathname, isInitialized, isAuthenticated, router]);
+
+  // Redirect unauthenticated users to /admin/login
+  useEffect(() => {
+    if (!isInitialized) return;
+    if (!isAuthenticated && pathname !== '/admin/login') {
+      router.replace('/admin/login');
+    }
+  }, [isAuthenticated, isInitialized, pathname, router]);
 
   // Close sidebar when route changes on mobile
   useEffect(() => {
@@ -28,7 +44,7 @@ export default function AdminLayout({
     return children;
   }
 
-  if (loading) {
+  if (loading || !isInitialized || (!isAuthenticated && pathname !== '/admin/login')) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>

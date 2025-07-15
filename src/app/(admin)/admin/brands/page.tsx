@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertCircle } from 'lucide-react';
-import { Brand } from '@/types/brand';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -19,14 +18,13 @@ import {
   DialogTitle,
   DialogClose,
 } from '@/components/ui/dialog';
-import { useBrands } from '@/hooks/useApi';
-import { frontendServices } from '@/lib/services/frontendServices';
-import { useAuth } from '@/hooks/useApi';
+import { Brand } from '@/types/brand';
 
 export default function AdminBrands() {
-  const { user, token, isInitialized } = useAuth();
-  const { data, loading, error, refetch } = useBrands();
-  const [selectedBrand, setSelectedBrand] = useState<Brand | undefined>();
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedBrand, setSelectedBrand] = useState<Brand | undefined>(undefined);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [statusModal, setStatusModal] = useState<{
@@ -40,70 +38,104 @@ export default function AdminBrands() {
     description: '',
     status: 'success',
   });
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 5;
 
-  // Brands list from API
-  const brands = data?.data || [];
+  const fetchBrands = async (page = 1) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/brands?page=${page}&limit=${limit}`);
+      const data = await res.json();
+      setBrands(data.data || []);
+      setTotalPages(data.totalPages || 1);
+    } catch (err) {
+      setError('Failed to fetch brands');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBrands(page);
+  }, [page]);
 
   const handleSaveBrand = async (brandData: Partial<Brand>) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
     try {
-      if (!token) throw new Error('Not authenticated');
-      if (selectedBrand && selectedBrand.id) {
-        // Update existing brand
-        await frontendServices.updateBrand(selectedBrand.id, brandData, token);
-        setStatusModal({
-          open: true,
-          title: 'Brand Updated',
-          description: 'The brand has been updated successfully.',
-          status: 'success',
+      let res;
+      if (brandData.id) {
+        // Update
+        res = await fetch(`/api/brands/${brandData.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify(brandData),
         });
       } else {
-        // Create new brand
-        await frontendServices.createBrand(brandData, token);
-        setStatusModal({
-          open: true,
-          title: 'Brand Created',
-          description: 'The brand has been created successfully.',
-          status: 'success',
+        // Create
+        res = await fetch('/api/brands', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(brandData),
         });
       }
-      setDialogOpen(false);
-      setSelectedBrand(undefined);
-      refetch();
-    } catch (error) {
+      if (!res.ok) throw new Error('Failed to save brand');
+      setStatusModal({
+        open: true,
+        title: brandData.id ? 'Brand Updated' : 'Brand Created',
+        description: `The brand has been ${brandData.id ? 'updated' : 'created'} successfully.`,
+        status: 'success',
+      });
+      fetchBrands(page);
+    } catch (err) {
       setStatusModal({
         open: true,
         title: 'Error',
-        description: error instanceof Error ? error.message : 'An error occurred while saving the brand.',
+        description: 'Failed to save brand.',
         status: 'error',
       });
+    } finally {
+      setDialogOpen(false);
+      setSelectedBrand(undefined);
     }
   };
 
   const handleDeleteBrand = async () => {
-    if (!selectedBrand || !selectedBrand.id) return;
+    if (!selectedBrand) return;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
     try {
-      if (!token) throw new Error('Not authenticated');
-      await frontendServices.deleteBrand(selectedBrand.id, token);
+      const res = await fetch(`/api/brands/${selectedBrand.id}`, {
+        method: 'DELETE',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      if (!res.ok) throw new Error('Failed to delete brand');
       setStatusModal({
         open: true,
         title: 'Brand Deleted',
         description: 'The brand has been deleted successfully.',
         status: 'success',
       });
-      setDeleteDialogOpen(false);
-      setSelectedBrand(undefined);
-      refetch();
-    } catch (error) {
+      fetchBrands(page);
+    } catch (err) {
       setStatusModal({
         open: true,
         title: 'Error',
-        description: error instanceof Error ? error.message : 'An error occurred while deleting the brand.',
+        description: 'Failed to delete brand.',
         status: 'error',
       });
+    } finally {
+      setDeleteDialogOpen(false);
+      setSelectedBrand(undefined);
     }
   };
 
-  if (loading || !isInitialized) {
+  if (loading) {
     return (
       <Card>
         <CardContent className="p-6">
@@ -126,7 +158,6 @@ export default function AdminBrands() {
     );
   }
 
-  // Show 'No data found' if brands is empty
   if (brands.length === 0) {
     return (
       <Card>
@@ -177,6 +208,7 @@ export default function AdminBrands() {
                           fill
                           className="object-contain"
                           sizes="48px"
+                          unoptimized
                         />
                       </div>
                     ) : (
@@ -217,6 +249,24 @@ export default function AdminBrands() {
               ))}
             </TableBody>
           </Table>
+          {/* Pagination Controls */}
+          <div className="flex justify-end gap-2 mt-4">
+            <Button
+              variant="outline"
+              disabled={page === 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              Previous
+            </Button>
+            <span className="self-center">Page {page} of {totalPages}</span>
+            <Button
+              variant="outline"
+              disabled={page === totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            >
+              Next
+            </Button>
+          </div>
         </CardContent>
       </Card>
       <BrandDialog

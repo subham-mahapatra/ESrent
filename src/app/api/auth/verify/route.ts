@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
+      valid: true,
       user,
       message: 'Token is valid'
     });

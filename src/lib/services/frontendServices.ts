@@ -67,7 +67,7 @@ class FrontendServices {
 
   async verifyToken(token: string) {
     return this.request<{ valid: boolean; user?: any }>('/auth/verify', {
-      method: 'POST',
+      method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
       },

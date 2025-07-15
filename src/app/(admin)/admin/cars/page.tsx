@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertCircle, Pencil, Trash2, Plus } from 'lucide-react';
 import { Car } from '@/types/car';
-import { CarService } from '@/lib/services/carService';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -12,8 +11,10 @@ import { CarDialog } from '@/components/admin/car-dialog';
 import { StatusModal } from '@/components/admin/status-modal';
 import { TableSkeleton } from '@/components/ui/table-skeleton';
 import { useToast } from '@/components/hooks/use-toast';
+import { useAuth } from '@/hooks/useApi';
 
 export default function AdminCars() {
+  const { token } = useAuth();
   const [cars, setCars] = useState<Car[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<{ error: string; details?: string } | null>(null);
@@ -36,17 +37,19 @@ export default function AdminCars() {
     try {
       setError(null);
       setLoading(true);
-      // Mock authentication for now
-      const mockUser = { uid: 'mock-user-id' };
-      if (!mockUser) {
-        throw new Error('Not authenticated');
+      // Fetch from API route only
+      console.log('Fetching cars from /api/cars...');
+      const res = await fetch('/api/cars');
+      const data = await res.json();
+      console.log('Raw /api/cars response:', data);
+      let carsArray: Car[] = [];
+      if (Array.isArray(data)) {
+        carsArray = data;
+      } else if ('data' in data && Array.isArray(data.data)) {
+        carsArray = data.data;
+      } else if ('cars' in data && Array.isArray(data.cars)) {
+        carsArray = data.cars;
       }
-
-      const carsResponse = await CarService.getAllCars();
-      // If the response is paginated, extract the cars array
-      const carsArray = Array.isArray(carsResponse)
-        ? carsResponse
-        : carsResponse.cars ?? [];
       setCars([...carsArray]);
     } catch (error) {
       console.error('Error fetching cars:', error);
@@ -77,13 +80,17 @@ export default function AdminCars() {
     if (!window.confirm('Are you sure you want to delete this car?')) return;
 
     try {
-      // Mock authentication for now
-      const mockUser = { uid: 'mock-user-id' };
-      if (!mockUser) {
-        throw new Error('Not authenticated');
+      if (!token) throw new Error('Not authenticated');
+      const res = await fetch(`/api/cars/${car.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
       }
-
-      await carService.deleteCar(car.id);
       toast({
         title: 'Car deleted',
         description: `${car.name} has been deleted successfully.`,
@@ -101,25 +108,47 @@ export default function AdminCars() {
 
   const handleSaveCar = async (carData: Partial<Car>) => {
     try {
-      // Mock authentication for now
-      const mockUser = { uid: 'mock-user-id' };
-      if (!mockUser) {
-        throw new Error('Not authenticated');
-      }
-
+      if (!token) throw new Error('Not authenticated');
       let savedCar: Car;
       if (selectedCar) {
-        savedCar = await carService.updateCar(selectedCar.id, carData);
-        // Update the car in the local state immediately
+        const res = await fetch(`/api/cars/${selectedCar.id}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(carData),
+        });
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        const updatedCar = await res.json();
         setCars(prevCars => 
           prevCars.map(car => 
-            car.id === selectedCar.id ? { ...car, ...savedCar } : car
+            car.id === selectedCar.id ? { ...car, ...updatedCar } : car
           )
         );
       } else {
-        savedCar = await carService.createCar(carData);
-        // Add the new car to the local state immediately
-        setCars(prevCars => [...prevCars, savedCar]);
+        // Ensure carData matches CreateCarData type
+        const requiredFields = ['brand', 'model', 'name', 'year', 'transmission', 'fuel', 'mileage', 'dailyPrice', 'images'];
+        for (const field of requiredFields) {
+          if (!(field in carData)) {
+            throw new Error(`Missing required field: ${field}`);
+          }
+        }
+        const res = await fetch('/api/cars', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(carData),
+        });
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        const createdCar = await res.json();
+        setCars(prevCars => [...prevCars, createdCar]);
       }
 
       // Close dialog and show success message

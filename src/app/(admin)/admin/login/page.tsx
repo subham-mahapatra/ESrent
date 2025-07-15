@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useApi';
 
 export default function AdminLogin() {
   const router = useRouter();
@@ -11,34 +12,22 @@ export default function AdminLogin() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    // Mock authentication check
-    const mockUser = { email: 'admin@esrent.ae' };
-    if (mockUser.email === email) {
-      router.push('/admin');
-    }
-  }, [router, email]);
+  const { login, isAuthenticated, isInitialized } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
-      // Mock authentication
-      if (email === 'admin@esrent.ae' && password === 'admin123') {
-        router.push('/admin');
-      } else {
-        setError('Invalid email or password');
+      const result = await login(email, password);
+      console.log('Login result:', result);
+      if (!result.success) {
+        setError(result.error || 'Invalid email or password');
       }
+      // Do NOT redirect here; let the useEffect handle it
     } catch (error: any) {
       console.error('Login error:', error);
-      setError(
-        error.code === 'auth/invalid-credential' 
-          ? 'Invalid email or password' 
-          : error.message || 'Failed to login'
-      );
+      setError(error.message || 'Failed to login');
     } finally {
       setLoading(false);
     }

@@ -61,6 +61,8 @@ export function useApi<T>(
   const hasInitializedRef = useRef(false);
 
   useEffect(() => {
+    isMountedRef.current = true;
+    hasInitializedRef.current = false; // Ensure fresh fetch on every mount
     return () => {
       isMountedRef.current = false;
     };
@@ -91,26 +93,36 @@ export function useApi<T>(
 
     console.log(`Fetching data for ${cacheKey}`);
     setState(prev => ({ ...prev, loading: true, error: null }));
+    console.log('fetchData: set loading true');
     
     try {
+      console.log('fetchData: calling memoizedApiCall');
       const data = await memoizedApiCall();
+      console.log('fetchData: API call resolved', data);
       
       if (isMountedRef.current) {
         setState({ data, loading: false, error: null });
+        console.log('fetchData: set state with data', data);
         
         // Cache the result
         if (cacheKey) {
           apiCache.set(cacheKey, { data, timestamp: Date.now() });
           console.log(`Cached data for ${cacheKey}`);
         }
+      } else {
+        console.log('fetchData: not mounted, skipping setState');
       }
     } catch (error) {
+      console.error('fetchData: API error', error);
       if (isMountedRef.current) {
         setState({
           data: null,
           loading: false,
           error: error instanceof Error ? error.message : 'An error occurred',
         });
+        console.log('fetchData: set state with error', error);
+      } else {
+        console.log('fetchData: not mounted, skipping setState (error)');
       }
     }
   }, [memoizedApiCall, cacheKey]);
@@ -126,7 +138,9 @@ export function useApi<T>(
   useEffect(() => {
     if (state.loading) {
       const timeout = setTimeout(() => {
-        setState(prev => ({ ...prev, loading: false, error: prev.error || 'Request timed out' }));
+        if (isMountedRef.current) {
+          setState(prev => ({ ...prev, loading: false, error: prev.error || 'Request timed out' }));
+        }
       }, 10000);
       return () => clearTimeout(timeout);
     }
@@ -146,25 +160,27 @@ export function useCars(params?: {
   limit?: number;
   featured?: boolean;
 }) {
+  const stableParams = useMemo(() => params, [JSON.stringify(params)]);
   const cacheKey = useMemo(() => {
-    return generateCacheKey('cars', params);
-  }, [params]);
+    return generateCacheKey('cars', stableParams);
+  }, [stableParams]);
 
-  const apiCall = useCallback(() => frontendServices.getCars(params), [params]);
+  const apiCall = useCallback(() => frontendServices.getCars(stableParams), [stableParams]);
 
   return useApi(apiCall, { 
-    dependencies: [params],
+    dependencies: [stableParams],
     cacheKey 
   });
 }
 
 // Hook for a single car
 export function useCar(id: string) {
-  const apiCall = useCallback(() => frontendServices.getCar(id), [id]);
+  const stableId = useMemo(() => id, [id]);
+  const apiCall = useCallback(() => frontendServices.getCar(stableId), [stableId]);
 
   return useApi(apiCall, { 
-    dependencies: [id],
-    cacheKey: `car-${id}`
+    dependencies: [stableId],
+    cacheKey: `car-${stableId}`
   });
 }
 
@@ -175,25 +191,27 @@ export function useBrands(params?: {
   page?: number;
   limit?: number;
 }) {
+  const stableParams = useMemo(() => params, [JSON.stringify(params)]);
   const cacheKey = useMemo(() => {
-    return generateCacheKey('brands', params);
-  }, [params]);
+    return generateCacheKey('brands', stableParams);
+  }, [stableParams]);
 
-  const apiCall = useCallback(() => frontendServices.getBrands(params), [params]);
+  const apiCall = useCallback(() => frontendServices.getBrands(stableParams), [stableParams]);
   
   return useApi(apiCall, { 
-    dependencies: [params],
+    dependencies: [stableParams],
     cacheKey 
   });
 }
 
 // Hook for a single brand
 export function useBrand(id: string) {
-  const apiCall = useCallback(() => frontendServices.getBrand(id), [id]);
+  const stableId = useMemo(() => id, [id]);
+  const apiCall = useCallback(() => frontendServices.getBrand(stableId), [stableId]);
 
   return useApi(apiCall, { 
-    dependencies: [id],
-    cacheKey: `brand-${id}`
+    dependencies: [stableId],
+    cacheKey: `brand-${stableId}`
   });
 }
 
@@ -205,25 +223,27 @@ export function useCategories(params?: {
   page?: number;
   limit?: number;
 }) {
+  const stableParams = useMemo(() => params, [JSON.stringify(params)]);
   const cacheKey = useMemo(() => {
-    return generateCacheKey('categories', params);
-  }, [params]);
+    return generateCacheKey('categories', stableParams);
+  }, [stableParams]);
 
-  const apiCall = useCallback(() => frontendServices.getCategories(params), [params]);
+  const apiCall = useCallback(() => frontendServices.getCategories(stableParams), [stableParams]);
 
   return useApi(apiCall, { 
-    dependencies: [params],
+    dependencies: [stableParams],
     cacheKey 
   });
 }
 
 // Hook for a single category
 export function useCategory(id: string) {
-  const apiCall = useCallback(() => frontendServices.getCategory(id), [id]);
+  const stableId = useMemo(() => id, [id]);
+  const apiCall = useCallback(() => frontendServices.getCategory(stableId), [stableId]);
 
   return useApi(apiCall, { 
-    dependencies: [id],
-    cacheKey: `category-${id}`
+    dependencies: [stableId],
+    cacheKey: `category-${stableId}`
   });
 }
 
@@ -240,11 +260,13 @@ export function useAuth() {
 
     // Check for token in localStorage
     const storedToken = localStorage.getItem('authToken');
+    console.log('Auth Hook: token in localStorage:', storedToken);
     if (storedToken) {
       setToken(storedToken);
       // Verify token
       frontendServices.verifyToken(storedToken)
         .then(({ valid, user }) => {
+          console.log('Auth Hook: /api/auth/verify response:', { valid, user });
           if (valid && user) {
             setUser(user);
           } else {
@@ -253,7 +275,8 @@ export function useAuth() {
             setUser(null);
           }
         })
-        .catch(() => {
+        .catch((err) => {
+          console.error('Auth Hook: /api/auth/verify error:', err);
           localStorage.removeItem('authToken');
           setToken(null);
           setUser(null);

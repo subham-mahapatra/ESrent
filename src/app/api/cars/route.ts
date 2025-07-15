@@ -4,6 +4,7 @@ import { requireAdmin } from '@/lib/middleware/auth';
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('GET /api/cars called');
     const { searchParams } = new URL(request.url);
     
     // Parse filters
@@ -27,9 +28,19 @@ export async function GET(request: NextRequest) {
     if (searchParams.get('sortBy')) searchOptions.sortBy = searchParams.get('sortBy')!;
     if (searchParams.get('sortOrder')) searchOptions.sortOrder = searchParams.get('sortOrder') as 'asc' | 'desc';
 
+    console.log('Filters:', filters);
+    console.log('Search Options:', searchOptions);
+
     const result = await CarService.getAllCars(filters, searchOptions);
+    console.log('GET /api/cars result:', result);
     
-    return NextResponse.json(result);
+    return NextResponse.json({
+      data: result.cars,
+      total: result.total,
+      page: result.page,
+      limit: searchOptions.limit || 12,
+      totalPages: result.totalPages
+    });
   } catch (error) {
     console.error('Error in GET /api/cars:', error);
     return NextResponse.json(
@@ -41,16 +52,19 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('POST /api/cars called');
     // Check authentication
     const authResult = await requireAdmin(request);
     if (authResult) return authResult;
 
     const body = await request.json();
+    console.log('POST /api/cars body:', body);
     
     // Validate required fields
     const requiredFields = ['brand', 'model', 'name', 'year', 'transmission', 'fuel', 'mileage', 'dailyPrice', 'images'];
     for (const field of requiredFields) {
       if (!body[field]) {
+        console.warn(`Missing required field: ${field}`);
         return NextResponse.json(
           { error: `Missing required field: ${field}` },
           { status: 400 }
@@ -59,6 +73,7 @@ export async function POST(request: NextRequest) {
     }
 
     const car = await CarService.createCar(body);
+    console.log('POST /api/cars created car:', car);
     
     return NextResponse.json(car, { status: 201 });
   } catch (error) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertCircle } from 'lucide-react';
 import { Car } from '@/types/car';
@@ -8,11 +8,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useCars } from '@/hooks/useApi';
 
 export default function AdminDashboard() {
-  const { data: carsData, loading: carsLoading, error: carsError } = useCars({ limit: 5 });
+  const carsParams = useMemo(() => ({ limit: 5 }), []);
+  const { data: carsData, loading: carsLoading, error: carsError } = useCars(carsParams);
   
   const cars = carsData?.data || [];
   const loading = carsLoading;
   const error = carsError ? { error: 'Failed to fetch cars', details: carsError } : null;
+
+  console.log('carsError:', carsError, 'carsLoading:', carsLoading, 'carsData:', carsData);
 
   if (loading) {
     return (
