@@ -5,6 +5,7 @@ import "../app/globals.css";
 import cn from "classnames";
 import Footer from "@/components/Footer";
 // import CrispChat from "@/components/CrispChat";
+import { AuthProvider } from '@/hooks/useAuthContext';
 
 const inter = Inter({
   variable: "--font-inter",
@@ -40,10 +41,12 @@ export default function RootLayout({
           "font-sans"
         )}
       >
+        <AuthProvider>
           <main className="flex-1">
             {children}
           </main>
-          {/* <CrispChat /> */}
+        </AuthProvider>
+        {/* <CrispChat /> */}
       </body>
     </html>
   );

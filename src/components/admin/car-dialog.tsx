@@ -20,6 +20,7 @@ import { Switch } from '@/components/ui/switch';
 import { uploadImage } from '@/lib/cloudinary';
 import { Image as ImageIcon, X, Loader2 } from 'lucide-react';
 import Image from 'next/image';
+import { useBrands } from '@/hooks/useApi';
 
 interface CarDialogProps {
   car?: Car;
@@ -57,7 +58,9 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
     setPreviewImages(car?.images || []);
   }, [car]);
 
-  const [brands, setBrands] = useState<Brand[]>([]);
+  // --- Brand API integration ---
+  const { data: brands, loading: brandsLoading, error: brandsError } = useBrands({ limit: 100 });
+
   type FuelType = 'Petrol' | 'Diesel' | 'Electric' | 'Hybrid';
   type CarType = 'Supercar' | 'SUV' | 'Sedan' | 'Hatchback' | 'Coupe' | 'Convertible' | 'Wagon';
   const fuelTypes: FuelType[] = ['Petrol', 'Diesel', 'Electric', 'Hybrid'];
@@ -193,17 +196,24 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
                 <Select
                   value={formData.brand || ''}
                   onValueChange={(value) => setFormData({ ...formData, brand: value })}
-                  disabled={loading}
+                  disabled={brandsLoading}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select brand" />
+                    <SelectValue placeholder={brandsLoading ? 'Loading brands...' : 'Select brand'} />
                   </SelectTrigger>
                   <SelectContent>
-                    {brands.map((brand) => (
-                      <SelectItem key={brand.id} value={brand.name}>
-                        {brand.name}
-                      </SelectItem>
-                    ))}
+                    {brandsError && (
+                      <div className="px-2 py-1 text-red-500 text-sm">Failed to load brands</div>
+                    )}
+                    {brands?.data && Array.isArray(brands.data) && brands.data.length > 0 ? (
+                      brands.data.map((brand: Brand) => (
+                        <SelectItem key={brand.id} value={brand.name}>
+                          {brand.name}
+                        </SelectItem>
+                      ))
+                    ) : !brandsLoading && !brandsError ? (
+                      <div className="px-2 py-1 text-muted-foreground text-sm">No brands found</div>
+                    ) : null}
                   </SelectContent>
                 </Select>
               </div>

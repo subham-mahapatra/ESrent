@@ -22,7 +22,8 @@ export default function AdminLayout({
   }, []);
 
   useEffect(() => {
-    if (pathname === '/admin/login' && isInitialized && isAuthenticated) {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+    if (pathname === '/admin/login' && isInitialized && isAuthenticated && token) {
       router.replace('/admin');
     }
   }, [pathname, isInitialized, isAuthenticated, router]);

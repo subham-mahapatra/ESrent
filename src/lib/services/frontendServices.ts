@@ -74,6 +74,12 @@ class FrontendServices {
     });
   }
 
+  async logout() {
+    return this.request<{ message: string }>('/auth/logout', {
+      method: 'POST',
+    });
+  }
+
   // Cars API
   async getCars(params?: {
     search?: string;
