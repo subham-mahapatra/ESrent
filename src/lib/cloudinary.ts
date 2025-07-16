@@ -1,12 +1,13 @@
 // Uploads an image file to the /api/upload endpoint and returns the Cloudinary URL
-export async function uploadImage(file: File, folder?: string): Promise<string> {
+export async function uploadImage(file: File, folder?: string, token?: string): Promise<string> {
   const formData = new FormData();
-  formData.append('image', file);
+  formData.append('files', file);
   if (folder) formData.append('folder', folder);
 
   const response = await fetch('/api/upload', {
     method: 'POST',
     body: formData,
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
   });
 
   if (!response.ok) {

@@ -7,6 +7,7 @@ const nextConfig = {
     domains: [
       '1000logos.net',
       'example.com',
+      'res.cloudinary.com',
     ],
     remotePatterns: [
       {

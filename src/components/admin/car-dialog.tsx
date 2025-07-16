@@ -81,10 +81,11 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
       const newPreviewUrls = Array.from(files).map(file => URL.createObjectURL(file));
       setPreviewImages([...previewImages, ...newPreviewUrls]);
 
-      // Upload images to Firebase Storage
+      // Upload images to backend with Authorization header
       const tempId = car?.id || 'temp-' + Date.now(); // Use existing car ID or generate temp ID
+      const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
       const uploadedUrls = await Promise.all(
-        Array.from(files).map(file => uploadImage(file, tempId))
+        Array.from(files).map(file => uploadImage(file, tempId, token))
       );
 
       // Update form data with new image URLs
@@ -152,7 +153,7 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
       model: formData.model?.trim() || formData.name.trim(),
       year: formData.year || new Date().getFullYear(),
       transmission: formData.transmission || 'Automatic',
-      fuelType: formData.fuel || 'Petrol', // Backend expects 'fuelType'
+      fuel: formData.fuel || 'Petrol', // Backend expects 'fuel'
       dailyPrice: formData.dailyPrice || 0,
       type: formData.category || 'Sedan', // Backend expects 'type'
       
