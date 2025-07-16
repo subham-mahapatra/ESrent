@@ -79,7 +79,10 @@ export default function AdminBrands() {
         // Create
         res = await fetch('/api/brands', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify(brandData),
         });
       }

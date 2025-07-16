@@ -50,9 +50,10 @@ export function BrandDialog({ brand, open, onOpenChange, onSave }: BrandDialogPr
       const previewUrl = URL.createObjectURL(file);
       setPreviewLogo(previewUrl);
 
-      // Upload logo to Firebase Storage
+      // Upload logo to backend with Authorization header
       const tempId = brand?.id || 'temp-' + Date.now();
-      const uploadedUrl = await uploadImage(file, `brands/${tempId}/logo`);
+      const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+      const uploadedUrl = await uploadImage(file, `brands/${tempId}/logo`, token);
 
       // Update form data with new logo URL
       setFormData(prev => ({

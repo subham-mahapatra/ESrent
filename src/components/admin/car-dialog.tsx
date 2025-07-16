@@ -20,7 +20,7 @@ import { Switch } from '@/components/ui/switch';
 import { uploadImage } from '@/lib/cloudinary';
 import { Image as ImageIcon, X, Loader2 } from 'lucide-react';
 import Image from 'next/image';
-import { useBrands } from '@/hooks/useApi';
+import { useBrands, useCategories } from '@/hooks/useApi';
 
 interface CarDialogProps {
   car?: Car;
@@ -60,6 +60,14 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
 
   // --- Brand API integration ---
   const { data: brands, loading: brandsLoading, error: brandsError } = useBrands({ limit: 100 });
+  const { data: categories, loading: categoriesLoading, error: categoriesError } = useCategories({ limit: 100 });
+  const carTypeCategories = categories?.categories?.filter((cat: any) => cat.type === 'carType') || [];
+  const fuelTypeCategories = categories?.categories?.filter((cat: any) => cat.type === 'fuelType') || [];
+  useEffect(() => {
+    if (categories) {
+      console.log('Fetched categories:', categories);
+    }
+  }, [categories]);
 
   type FuelType = 'Petrol' | 'Diesel' | 'Electric' | 'Hybrid';
   type CarType = 'Supercar' | 'SUV' | 'Sedan' | 'Hatchback' | 'Coupe' | 'Convertible' | 'Wagon';
@@ -262,18 +270,26 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
               <div className="space-y-2">
                 <Label className="text-card-foreground">Fuel Type</Label>
                 <Select
-                  value={formData.fuel || 'Petrol'}
+                  value={formData.fuel || ''}
                   onValueChange={(value: string) => setFormData({ ...formData, fuel: value })}
+                  disabled={categoriesLoading}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select fuel type" />
+                    <SelectValue placeholder={categoriesLoading ? 'Loading fuel types...' : 'Select fuel type'} />
                   </SelectTrigger>
                   <SelectContent>
-                    {fuelTypes.map((fuelType, index) => (
-                      <SelectItem key={`fuel-${index}-${fuelType}`} value={fuelType}>
-                        {fuelType}
-                      </SelectItem>
-                    ))}
+                    {categoriesError && (
+                      <div className="px-2 py-1 text-red-500 text-sm">Failed to load fuel types</div>
+                    )}
+                    {fuelTypeCategories.length > 0 ? (
+                      fuelTypeCategories.map((cat: any) => (
+                        <SelectItem key={cat.id} value={cat.name}>
+                          {cat.name}
+                        </SelectItem>
+                      ))
+                    ) : !categoriesLoading && !categoriesError ? (
+                      <div className="px-2 py-1 text-muted-foreground text-sm">No fuel types found</div>
+                    ) : null}
                   </SelectContent>
                 </Select>
               </div>
@@ -309,16 +325,24 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
                 <Select
                   value={formData.category || ''}
                   onValueChange={(value: string) => setFormData({ ...formData, category: value })}
+                  disabled={categoriesLoading}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select car type" />
+                    <SelectValue placeholder={categoriesLoading ? 'Loading car types...' : 'Select car type'} />
                   </SelectTrigger>
                   <SelectContent>
-                    {carTypes.map((carType, index) => (
-                      <SelectItem key={`cartype-${index}-${carType}`} value={carType}>
-                        {carType}
-                      </SelectItem>
-                    ))}
+                    {categoriesError && (
+                      <div className="px-2 py-1 text-red-500 text-sm">Failed to load car types</div>
+                    )}
+                    {carTypeCategories.length > 0 ? (
+                      carTypeCategories.map((cat: any) => (
+                        <SelectItem key={cat.id} value={cat.name}>
+                          {cat.name}
+                        </SelectItem>
+                      ))
+                    ) : !categoriesLoading && !categoriesError ? (
+                      <div className="px-2 py-1 text-muted-foreground text-sm">No car types found</div>
+                    ) : null}
                   </SelectContent>
                 </Select>
               </div>

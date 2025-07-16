@@ -78,9 +78,10 @@ export function CategoryDialog({ open, onOpenChange, category, onSave }: Categor
       setPreviewUrl(newPreviewUrl);
       setSelectedImage(file);
 
-      // Upload to Firebase Storage
+      // Upload to backend with Authorization header
       const categoryId = category?.id || 'temp-' + Date.now();
-      const imageUrl = await uploadImage(file, `categories/${categoryId}/image`);
+      const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+      const imageUrl = await uploadImage(file, `categories/${categoryId}/image`, token);
 
       // Update form data with the new image URL
       setFormData(prev => ({
