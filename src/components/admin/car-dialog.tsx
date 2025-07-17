@@ -67,8 +67,14 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
   
   // Handle both response structures: { data: [...] } and { categories: [...] }
   const categoriesArray: Category[] = useMemo(() => {
-    if (Array.isArray((categories as any)?.data)) return (categories as any).data;
-    if (Array.isArray((categories as any)?.categories)) return (categories as any).categories;
+    if (categories && typeof categories === 'object') {
+      if (Array.isArray((categories as { data?: unknown }).data)) {
+        return (categories as { data: Category[] }).data;
+      }
+      if (Array.isArray(((categories as unknown) as { categories?: unknown }).categories)) {
+        return ((categories as unknown) as { categories: Category[] }).categories;
+      }
+    }
     return [];
   }, [categories]);
   const carTypeCategories: Category[] = categoriesArray.filter((cat) => cat.type === 'carType');
@@ -83,11 +89,6 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
     }
   }, [categories, categoriesArray, carTypeCategories, fuelTypeCategories]);
 
-  type FuelType = 'Petrol' | 'Diesel' | 'Electric' | 'Hybrid';
-  type CarType = 'Supercar' | 'SUV' | 'Sedan' | 'Hatchback' | 'Coupe' | 'Convertible' | 'Wagon';
-  const fuelTypes: FuelType[] = ['Petrol', 'Diesel', 'Electric', 'Hybrid'];
-  const carTypes: CarType[] = ['Supercar', 'SUV', 'Sedan', 'Hatchback', 'Coupe', 'Convertible', 'Wagon'];
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // setBrands([]); // or mock data

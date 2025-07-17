@@ -61,7 +61,7 @@ export default function BrandPage() {
                 </div>
                 <h1 className="text-3xl font-bold mb-4 text-white">Brand Not Found</h1>
                 <p className="text-gray-300 mb-8 text-lg">
-                  The brand you're looking for doesn't exist or may have been removed.
+                  The brand you&apos;re looking for doesn&apos;t exist or may have been removed.
                 </p>
                 <Button onClick={() => window.history.back()} size="lg" className="gap-2 bg-blue-600 hover:bg-blue-700">
                   <ArrowLeft className="w-4 h-4" />
@@ -152,7 +152,7 @@ export default function BrandPage() {
               </div>
               <h3 className="text-2xl font-semibold text-white mb-4">No vehicles available</h3>
               <p className="text-gray-400 mb-8 max-w-md mx-auto">
-                We don't have any {brand.name} vehicles in our inventory at the moment. Check back later for new
+                We don&apos;t have any {brand.name} vehicles in our inventory at the moment. Check back later for new
                 arrivals.
               </p>
               <Button

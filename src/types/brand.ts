@@ -16,4 +16,4 @@ export interface NewBrand extends Omit<Brand, 'id' | 'createdAt' | 'updatedAt'> 
 }
 
 // Type for updating a brand
-export interface UpdateBrandData extends Partial<Omit<Brand, 'id' | 'createdAt' | 'updatedAt'>> {}
+export type UpdateBrandData = Partial<Omit<Brand, 'id' | 'createdAt' | 'updatedAt'>>;

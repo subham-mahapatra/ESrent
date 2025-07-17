@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Upload, X, Loader2 } from 'lucide-react';
 import { uploadImage } from '@/lib/cloudinary';
 import { Textarea } from '@/components/ui/textarea';
+import Image from 'next/image';
 
 interface CategoryDialogProps {
   open: boolean;
@@ -31,8 +32,7 @@ export function CategoryDialog({ open, onOpenChange, category, onSave }: Categor
       description: '',
     }
   );
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -47,8 +47,7 @@ export function CategoryDialog({ open, onOpenChange, category, onSave }: Categor
         image: '',
         description: '',
       });
-      setSelectedImage(null);
-      setPreviewUrl(category?.image || null);
+      setPreviewUrl(category?.image === null ? undefined : category?.image);
       setError(null);
       setIsSubmitting(false);
     }
@@ -76,7 +75,6 @@ export function CategoryDialog({ open, onOpenChange, category, onSave }: Categor
       // Create temporary preview
       const newPreviewUrl = URL.createObjectURL(file);
       setPreviewUrl(newPreviewUrl);
-      setSelectedImage(file);
 
       // Upload to backend with Authorization header
       const categoryId = category?.id || 'temp-' + Date.now();
@@ -91,17 +89,20 @@ export function CategoryDialog({ open, onOpenChange, category, onSave }: Categor
 
       // Clean up preview URL
       URL.revokeObjectURL(newPreviewUrl);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error uploading image:', error);
-      setError(error.message || 'Failed to upload image');
+      if (typeof error === 'object' && error && 'message' in error && typeof (error as { message?: unknown }).message === 'string') {
+        setError((error as { message: string }).message);
+      } else {
+        setError('Failed to upload image');
+      }
     } finally {
       setIsUploading(false);
     }
   };
 
   const handleRemoveImage = () => {
-    setSelectedImage(null);
-    setPreviewUrl(null);
+    setPreviewUrl(undefined);
     setFormData(prev => ({ ...prev, image: '' }));
   };
 
@@ -135,9 +136,13 @@ export function CategoryDialog({ open, onOpenChange, category, onSave }: Categor
       // Submit the category data
       await onSave(categoryData);
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Form submission error:', error);
-      setError(error.message || 'Failed to save category');
+      if (typeof error === 'object' && error && 'message' in error && typeof (error as { message?: unknown }).message === 'string') {
+        setError((error as { message: string }).message);
+      } else {
+        setError('Failed to save category');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -243,9 +248,11 @@ export function CategoryDialog({ open, onOpenChange, category, onSave }: Categor
             <div className="mt-2 flex items-center gap-4">
               {previewUrl ? (
                 <div className="relative w-32 h-32">
-                  <img
+                  <Image
                     src={previewUrl}
                     alt="Category preview"
+                    width={128}
+                    height={128}
                     className="w-full h-full object-cover rounded-md"
                   />
                   <button

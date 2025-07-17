@@ -13,7 +13,6 @@ export function CarBrandLogo({ brand }: CarBrandLogoProps) {
 
   useEffect(() => {
     const fetchBrandData = async () => {
-      const slug = brand.toLowerCase().replace(/\s+/g, '-')
       const data = {}; // or mock data
       if (data) {
         setBrandData(data as Brand) // Assuming data is of type Brand

@@ -19,4 +19,4 @@ export interface CreateCategoryData extends Omit<Category, 'id' | 'createdAt' | 
 }
 
 // Type for updating a category
-export interface UpdateCategoryData extends Partial<Omit<Category, 'id' | 'createdAt' | 'updatedAt'>> {}
+export type UpdateCategoryData = Partial<Omit<Category, 'id' | 'createdAt' | 'updatedAt'>>;

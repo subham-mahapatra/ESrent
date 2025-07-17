@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertCircle } from 'lucide-react';
-import { Car } from '@/types/car';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useCars } from '@/hooks/useApi';
 

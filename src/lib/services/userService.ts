@@ -1,4 +1,4 @@
-import { User as UserModel, IUser } from '@/lib/models/userSchema';
+import { User as UserModel } from '@/lib/models/userSchema';
 import { dbConnect } from '@/lib/mongodb';
 import jwt from 'jsonwebtoken';
 
@@ -185,8 +185,8 @@ export class UserService {
    */
   static async verifyToken(token: string): Promise<User | null> {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
-      const user = await this.getUserById(decoded.userId);
+      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as Record<string, unknown>;
+      const user = await this.getUserById(decoded.userId as string);
       
       if (!user || !user.isActive) {
         return null;

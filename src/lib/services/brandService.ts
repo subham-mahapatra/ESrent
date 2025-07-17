@@ -1,6 +1,5 @@
 import { Brand, NewBrand, UpdateBrandData } from '@/types/brand';
-import { Brand as BrandModel } from '@/lib/models/brandSchema';
-import { Car as CarModel } from '@/lib/models/carSchema';
+import { Brand as BrandModel, Car as CarModel } from '@/lib/models';
 import { dbConnect } from '@/lib/mongodb';
 
 export interface BrandFilters {
@@ -73,7 +72,7 @@ export class BrandService {
       const skip = (page - 1) * limit;
 
       // Build query
-      const query: any = {};
+      const query: Record<string, unknown> = {};
 
       if (filters.featured !== undefined) {
         query.featured = filters.featured;
@@ -84,7 +83,7 @@ export class BrandService {
       }
 
       // Build sort object
-      const sort: any = {};
+      const sort: Record<string, unknown> = {};
       sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
       // Execute query

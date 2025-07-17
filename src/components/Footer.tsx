@@ -1,8 +1,7 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Instagram, Mail, Phone } from 'lucide-react';
 import { SiSnapchat } from 'react-icons/si';
-import { FaSnapchat, FaInstagram, FaPhone } from 'react-icons/fa6';
-import { MdOutlineMail } from 'react-icons/md';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -14,11 +13,14 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           {/* Company Info */}
           <div className="flex flex-col gap-3">
-            <img
+            <Image
               src="/images/ES logo (1).svg"
               alt="ES Rent a Car Logo"
+              width={80}
+              height={80}
               className="w-20 h-20 mb-2"
               style={{ filter: 'invert(89%) sepia(90%) saturate(1352%) hue-rotate(127deg) brightness(103%) contrast(97%)' }}
+              priority
             />
             <p className="text-sm text-muted-foreground mb-2">
               Your premier destination for luxury and exotic car rentals.

@@ -3,7 +3,6 @@ import { Inter } from "next/font/google";
 import { Instrument_Sans } from "next/font/google";
 import "../app/globals.css";
 import cn from "classnames";
-import Footer from "@/components/Footer";
 // import CrispChat from "@/components/CrispChat";
 import { AuthProvider } from '@/hooks/useAuthContext';
 

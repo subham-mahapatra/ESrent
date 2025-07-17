@@ -2,8 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card";
 import { FaWhatsapp } from "react-icons/fa";
 import { Car } from '@/types/car';
 import { Tilt } from '@/components/ui/tilt';
@@ -16,7 +15,7 @@ interface CarCardProps {
   linkHref?: string;
 }
 
-export function CarCard({ car, onClick, className = '', linkHref }: CarCardProps) {
+export function CarCard({ car, onClick, linkHref }: CarCardProps) {
   const href = linkHref || `/car/${car.id}`;
 
   // Safely get the first image or use a fallback

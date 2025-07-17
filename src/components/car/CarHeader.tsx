@@ -3,7 +3,6 @@
 import { ArrowLeft, Calendar, MapPin } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { CarBrandLogo } from './CarBrandLogo'
 
 interface CarHeaderProps {
   previousPage: string
@@ -19,8 +18,6 @@ export function CarHeader({
   previousPage,
   selectedDate,
   endDate,
-  title,
-  brand,
   setSelectedDate,
   setEndDate
 }: CarHeaderProps) {

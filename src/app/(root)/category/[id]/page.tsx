@@ -1,17 +1,10 @@
 'use client';
-
-import { Metadata } from 'next';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import Image from 'next/image';
-import Link from 'next/link';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Car } from '@/types/car';
 import { SearchResultsSkeleton } from '@/components/ui/card-skeleton';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorState } from '@/components/ui/error-state';
-import { FaWhatsapp } from "react-icons/fa";
 import { CarCard } from '@/components/car/CarCard';
 import { frontendServices } from '@/lib/services/frontendServices';
 
@@ -22,11 +15,7 @@ export default function CategoryPage() {
   const [loading, setLoading] = useState(true);
   const [categoryName, setCategoryName] = useState<string>('');
 
-  useEffect(() => {
-    loadCarsByCategory();
-  }, [categoryId]);
-
-  const loadCarsByCategory = async () => {
+  const loadCarsByCategory = useCallback(async () => {
     try {
       setLoading(true);
       const decodedId = decodeURIComponent(categoryId);
@@ -65,7 +54,11 @@ export default function CategoryPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [categoryId]);
+
+  useEffect(() => {
+    loadCarsByCategory();
+  }, [categoryId, loadCarsByCategory]);
 
   if (loading) {
     return (

@@ -5,19 +5,19 @@ import { frontendServices } from '@/lib/services/frontendServices';
 
 interface AuthContextType {
   token: string | null;
-  user: any;
+  user: Record<string, unknown> | null;
   isInitialized: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
-  register: (userData: { email: string; password: string; name: string; role: string }) => Promise<{ success: boolean; user?: any; error?: string }>;
+  register: (userData: { email: string; password: string; name: string; role: string }) => Promise<{ success: boolean; user?: Record<string, unknown>; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<Record<string, unknown> | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setToken(authToken);
       setUser(userData);
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Login failed',
@@ -70,7 +70,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { user: newUser } = await frontendServices.register(userData);
       return { success: true, user: newUser };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Registration failed',

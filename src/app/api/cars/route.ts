@@ -12,17 +12,20 @@ export async function GET(request: NextRequest) {
     const searchOptions: CarSearchOptions = {};
 
     // Filter parameters
-    if (searchParams.get('brand')) filters.brand = searchParams.get('brand')!;
-    if (searchParams.get('category')) filters.category = searchParams.get('category')!;
-    if (searchParams.get('categoryId')) filters.categoryId = searchParams.get('categoryId')!;
-    if (searchParams.get('transmission')) filters.transmission = searchParams.get('transmission')!;
-    if (searchParams.get('fuel')) filters.fuel = searchParams.get('fuel')!;
-    if (searchParams.get('minPrice')) filters.minPrice = Number(searchParams.get('minPrice'));
-    if (searchParams.get('maxPrice')) filters.maxPrice = Number(searchParams.get('maxPrice'));
-    if (searchParams.get('isAvailable')) filters.isAvailable = searchParams.get('isAvailable') === 'true';
-    if (searchParams.get('isFeatured')) filters.isFeatured = searchParams.get('isFeatured') === 'true';
-    if (searchParams.get('search')) filters.search = searchParams.get('search')!;
-    if (searchParams.get('brandId')) filters.brandId = searchParams.get('brandId');
+    const brand = searchParams.get('brand');
+    if (brand !== null) filters.brand = brand;
+    const category = searchParams.get('category');
+    if (category !== null) filters.category = category;
+    const categoryId = searchParams.get('categoryId');
+    if (categoryId !== null) filters.categoryId = categoryId;
+    const transmission = searchParams.get('transmission');
+    if (transmission !== null) filters.transmission = transmission;
+    const fuel = searchParams.get('fuel');
+    if (fuel !== null) filters.fuel = fuel;
+    const search = searchParams.get('search');
+    if (search !== null) filters.search = search;
+    const brandId = searchParams.get('brandId');
+    if (brandId !== null) filters.brandId = brandId;
 
     // Pagination and sorting
     if (searchParams.get('page')) searchOptions.page = Number(searchParams.get('page'));

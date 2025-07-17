@@ -132,8 +132,8 @@ const carSchema = new Schema<ICar>({
 }, {
   timestamps: true,
   toJSON: {
-    transform: function(doc, ret: any) {
-      ret.id = ret._id ? ret._id.toString() : undefined;
+    transform: function(doc, ret: Record<string, unknown>) {
+      ret.id = ret._id ? (ret._id as { toString: () => string }).toString() : undefined;
       delete ret._id;
       delete ret.__v;
       return ret;
@@ -157,7 +157,7 @@ try {
   } else {
     Car = mongoose.model<ICar>('Car', carSchema);
   }
-} catch (err) {
+} catch {
   // Fallback: define the model if not already defined
   Car = mongoose.model<ICar>('Car', carSchema);
 }

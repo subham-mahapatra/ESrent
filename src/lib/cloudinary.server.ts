@@ -20,7 +20,7 @@ export class CloudinaryService {
   static async uploadImage(
     file: Buffer | string,
     folder: string = 'esrent',
-    options: { transformation?: any; public_id?: string } = {}
+    options: { transformation?: Record<string, unknown>; public_id?: string } = {}
   ): Promise<UploadResult> {
     const uploadOptions = {
       folder,
@@ -39,11 +39,11 @@ export class CloudinaryService {
     };
   }
 
-  static async deleteMultipleImages(public_ids: string[]): Promise<any[]> {
+  static async deleteMultipleImages(public_ids: string[]): Promise<unknown[]> {
     return Promise.all(public_ids.map(id => this.deleteImage(id)));
   }
 
-  static async deleteImage(public_id: string): Promise<any> {
+  static async deleteImage(public_id: string): Promise<unknown> {
     return cloudinary.uploader.destroy(public_id);
   }
   // ... (add other methods if needed)

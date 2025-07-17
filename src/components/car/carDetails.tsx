@@ -22,6 +22,7 @@ import {
   MessageCircle,
   Rocket
 } from "lucide-react"
+import Image from 'next/image';
 
 export default function CarDetails() {
   const params = useParams()
@@ -89,7 +90,7 @@ export default function CarDetails() {
           <CardContent className="p-8 text-center">
             <Car className="w-16 h-16 mx-auto mb-4 text-gray-400" />
             <h1 className="text-2xl font-semibold mb-4">Car Not Found</h1>
-            <p className="text-gray-400 mb-6">The car you're looking for doesn't exist.</p>
+            <p className="text-gray-400 mb-6">The car you&apos;re looking for doesn&apos;t exist.</p>
             <Button onClick={handleBackClick} className="gap-2">
               <ArrowLeft className="w-4 h-4" />
               Go Back
@@ -147,10 +148,13 @@ export default function CarDetails() {
           <div className="space-y-6">
             <div className="relative">
               <div className="relative overflow-hidden rounded-2xl bg-gray-900">
-                <img
+                <Image
                   src={car.images?.[currentImageIndex] || "/placeholder.svg?height=500&width=700"}
                   alt={car.name}
+                  width={700}
+                  height={500}
                   className="w-full h-[500px] object-cover"
+                  priority
                 />
 
                 {/* Image Navigation */}

@@ -1,4 +1,4 @@
-import { ICar } from '@/lib/models/carSchema';
+
 
 export interface Car {
   id: string;

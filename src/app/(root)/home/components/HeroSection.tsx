@@ -65,7 +65,7 @@ ${selectedType ? `Car Type: ${selectedType}` : ''}`;
           Parked in Dubai, Just for you.
         </h1>
         <p className="text-lg md:text-xl text-white/90 text-center max-w-3xl mb-12">
-          Discover Dubai's finest collection of premium vehicles. From sleek sports cars to elegant SUVs, we've got your perfect ride.
+          Discover Dubai&apos;s finest collection of premium vehicles. From sleek sports cars to elegant SUVs, we&apos;ve got your perfect ride.
         </p>
 
         {/* Search Form */}

@@ -1,6 +1,6 @@
 'use client'
 
-import { Car } from '@/types/car'
+
 
 interface CarDescriptionProps {
   description: string

@@ -1,16 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Car } from '@/types/car'
 import { Header } from '../home/components/Header'
 import { FilterModal, FilterValues } from '../home/components/FilterModal'
 import { Button } from '@/components/ui/button'
-import Link from 'next/link'
-import Image from 'next/image'
-import { Card, CardContent } from '@/components/ui/card'
 import { SearchBar } from '../home/components/SearchBar'
 import { Calendar } from 'lucide-react'
-import { FaWhatsapp } from "react-icons/fa";
 import { CarCard } from '@/components/car/CarCard'
 import { format, addDays } from 'date-fns';
 import { useCars } from '@/hooks/useApi';
@@ -34,7 +30,6 @@ export default function CarsPage() {
   // Car hire state
   const [pickupDate, setPickupDate] = useState('')
   const [dropoffDate, setDropoffDate] = useState('')
-  const [pickupLocation, setPickupLocation] = useState('Dubai')
 
   // Initialize dates on client side only
   useEffect(() => {
@@ -42,11 +37,11 @@ export default function CarsPage() {
     setDropoffDate(format(addDays(new Date(), 1), 'yyyy-MM-dd'))
   }, [])
 
-  const durations = [
+  const durations = useMemo(() => [
     { label: 'Daily', value: 'daily', days: 1 },
     { label: '+3 Days', value: '3days', days: 3 },
     { label: 'Weekly', value: 'weekly', days: 7 },
-  ];
+  ], []);
   const [selectedDuration, setSelectedDuration] = useState('daily');
 
   // Update dropoffDate when pickupDate or duration changes
@@ -57,7 +52,7 @@ export default function CarsPage() {
     if (isNaN(pickup.getTime())) return; // Guard: only run if pickupDate is a valid date
     const newDropoff = format(addDays(pickup, durationObj.days), 'yyyy-MM-dd');
     setDropoffDate(newDropoff);
-  }, [pickupDate, selectedDuration]);
+  }, [pickupDate, selectedDuration, durations]);
 
   // Format date for display
   const formatDate = (dateString: string) => {
@@ -72,7 +67,7 @@ export default function CarsPage() {
   };
 
   // Use API hook for cars
-  const { data: carsData, loading: carsLoading, error: carsError } = useCars({ limit: 100 });
+  const { data: carsData, loading: carsLoading } = useCars({ limit: 100 });
 
   // Update cars when data changes
   useEffect(() => {
@@ -189,7 +184,7 @@ export default function CarsPage() {
           <div className="bg-secondary/50 rounded-lg p-4 my-4 flex items-center gap-4">
             <Calendar className="h-5 w-5 text-primary" />
             <div>
-              <p className="text-sm font-medium">Selected dates for car hire in {pickupLocation}</p>
+              <p className="text-sm font-medium">Selected dates for car hire</p>
               <p className="text-sm text-muted-foreground">
                 {formatDate(pickupDate)} - {formatDate(dropoffDate)}
               </p>

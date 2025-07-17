@@ -54,9 +54,9 @@ const userSchema = new Schema<IUser>({
   toJSON: {
     transform: function(doc, ret) {
       ret.id = ret._id;
-      delete (ret as any)._id;
-      delete (ret as any).__v;
-      delete (ret as any).password; // Don't send password in JSON
+      delete (ret as Record<string, unknown>)._id;
+      delete (ret as Record<string, unknown>).__v;
+      delete (ret as Record<string, unknown>).password; // Don't send password in JSON
       return ret;
     }
   }
@@ -71,7 +71,7 @@ userSchema.pre('save', async function(next) {
     this.password = await bcrypt.hash(this.password, salt);
     next();
   } catch (error) {
-    next(error as Error);
+    next(error instanceof Error ? error : new Error('Unknown error during password hash'));
   }
 });
 

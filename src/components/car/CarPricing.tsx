@@ -21,7 +21,7 @@ interface CarPricingProps {
 
 export function CarPricing({ car, selectedDate, endDate }: CarPricingProps) {
   // We'll keep the props for backward compatibility, but also use context
-  const { pickupDate, dropoffDate, pickupLocation } = useCarHire()
+  const { pickupDate, dropoffDate } = useCarHire()
   
   // Use context values if props are empty
   const effectivePickupDate = selectedDate || pickupDate

@@ -45,8 +45,8 @@ const brandSchema = new Schema<IBrand>({
   toJSON: {
     transform: function(doc, ret) {
       ret.id = ret._id;
-      delete (ret as any)._id;
-      delete (ret as any).__v;
+      delete (ret as Record<string, unknown>)._id;
+      delete (ret as Record<string, unknown>).__v;
       return ret;
     }
   }

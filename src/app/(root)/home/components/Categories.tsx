@@ -31,12 +31,14 @@ export function Categories({ categories }: CategoriesProps) {
                 href={`/category/${encodeURIComponent(category.id || category.slug)}`}
                 className="group relative flex-none w-[280px] aspect-square rounded-2xl overflow-hidden snap-start"
               >
-                <Image
-                  src={category.image || ''}
-                  alt={category.name}
-                  fill
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
-                />
+                {category.image ? (
+                  <Image
+                    src={category.image}
+                    alt={category.name}
+                    fill
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                ) : null}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 <div className="absolute bottom-4 left-4">
                   <h3 className="heading-4 text-white">{category.name}</h3>

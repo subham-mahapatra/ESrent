@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronLeft } from 'lucide-react';
 import { Brand } from '@/types/brand';
 import { BrandDetailsSkeleton } from '@/components/ui/card-skeleton';
 import { PageHeader } from '@/components/PageHeader';
@@ -12,7 +11,7 @@ import { useBrands } from '@/hooks/useApi';
 export default function BrandsPage() {
   const { data: brandsData, loading: brandsLoading } = useBrands({ limit: 100 });
   
-  const brands = brandsData?.data || [];
+  const brands = useMemo(() => brandsData?.data || [], [brandsData]);
   const loading = brandsLoading;
 
   useEffect(() => {

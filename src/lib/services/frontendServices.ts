@@ -52,21 +52,21 @@ class FrontendServices {
 
   // Authentication methods
   async login(email: string, password: string) {
-    return this.request<{ token: string; user: any }>('/auth/login', {
+    return this.request<{ token: string; user: Record<string, unknown> }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
   }
 
   async register(userData: { email: string; password: string; name: string; role: string }) {
-    return this.request<{ message: string; user: any }>('/auth/register', {
+    return this.request<{ message: string; user: Record<string, unknown> }>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(userData),
     });
   }
 
   async verifyToken(token: string) {
-    return this.request<{ valid: boolean; user?: any }>('/auth/verify', {
+    return this.request<{ valid: boolean; user?: Record<string, unknown> }>('/auth/verify', {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -104,15 +104,15 @@ class FrontendServices {
     const queryString = searchParams.toString();
     const endpoint = `/cars${queryString ? `?${queryString}` : ''}`;
     
-    return this.request<PaginatedResponse<any>>(endpoint);
+    return this.request<PaginatedResponse<Record<string, unknown>>>(endpoint);
   }
 
   async getCar(id: string) {
-    return this.request<any>(`/cars/${id}`);
+    return this.request<Record<string, unknown>>(`/cars/${id}`);
   }
 
-  async createCar(carData: any, token: string) {
-    return this.request<any>('/cars', {
+  async createCar(carData: Record<string, unknown>, token: string) {
+    return this.request<Record<string, unknown>>('/cars', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -121,8 +121,8 @@ class FrontendServices {
     });
   }
 
-  async updateCar(id: string, carData: any, token: string) {
-    return this.request<any>(`/cars/${id}`, {
+  async updateCar(id: string, carData: Record<string, unknown>, token: string) {
+    return this.request<Record<string, unknown>>(`/cars/${id}`, {
       method: 'PUT',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -159,15 +159,15 @@ class FrontendServices {
     const queryString = searchParams.toString();
     const endpoint = `/brands${queryString ? `?${queryString}` : ''}`;
     
-    return this.request<PaginatedResponse<any>>(endpoint);
+    return this.request<PaginatedResponse<Record<string, unknown>>>(endpoint);
   }
 
   async getBrand(id: string) {
-    return this.request<any>(`/brands/${id}`);
+    return this.request<Record<string, unknown>>(`/brands/${id}`);
   }
 
-  async createBrand(brandData: any, token: string) {
-    return this.request<any>('/brands', {
+  async createBrand(brandData: Record<string, unknown>, token: string) {
+    return this.request<Record<string, unknown>>('/brands', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -176,8 +176,8 @@ class FrontendServices {
     });
   }
 
-  async updateBrand(id: string, brandData: any, token: string) {
-    return this.request<any>(`/brands/${id}`, {
+  async updateBrand(id: string, brandData: Record<string, unknown>, token: string) {
+    return this.request<Record<string, unknown>>(`/brands/${id}`, {
       method: 'PUT',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -215,19 +215,19 @@ class FrontendServices {
     const queryString = searchParams.toString();
     const endpoint = `/categories${queryString ? `?${queryString}` : ''}`;
     
-    return this.request<PaginatedResponse<any>>(endpoint);
+    return this.request<PaginatedResponse<Record<string, unknown>>>(endpoint);
   }
 
   async getCategoriesWithCarCounts() {
-    return this.request<{ categories: any[] }>('/categories?withCarCounts=true');
+    return this.request<{ categories: Record<string, unknown>[] }>('/categories?withCarCounts=true');
   }
 
   async getCategory(id: string) {
-    return this.request<any>(`/categories/${id}`);
+    return this.request<Record<string, unknown>>(`/categories/${id}`);
   }
 
-  async createCategory(categoryData: any, token: string) {
-    return this.request<any>('/categories', {
+  async createCategory(categoryData: Record<string, unknown>, token: string) {
+    return this.request<Record<string, unknown>>('/categories', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -236,8 +236,8 @@ class FrontendServices {
     });
   }
 
-  async updateCategory(id: string, categoryData: any, token: string) {
-    return this.request<any>(`/categories/${id}`, {
+  async updateCategory(id: string, categoryData: Record<string, unknown>, token: string) {
+    return this.request<Record<string, unknown>>(`/categories/${id}`, {
       method: 'PUT',
       headers: {
         Authorization: `Bearer ${token}`,

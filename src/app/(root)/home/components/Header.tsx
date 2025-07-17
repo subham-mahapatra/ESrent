@@ -1,5 +1,6 @@
 import { Home, Car, Building2, Grid3X3, HelpCircle, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { NavBar } from '@/components/ui/tubelight-navbar';
 
 export function Header() {
@@ -20,15 +21,18 @@ export function Header() {
           {/* Logo left */}
           <div className="absolute left-4 top-1/2 -translate-y-1/2">
             <Link href="/">
-              <img
+              <Image
                 src="/images/ES logo (1).svg"
                 alt="AutoLuxe Logo"
+                width={96}
+                height={96}
                 className="w-20 h-20 sm:w-24 sm:h-24"
                 style={{ 
                   minWidth: '80px', 
                   minHeight: '80px',
                   filter: 'invert(100%)' 
                 }}
+                priority
               />
             </Link>
           </div>

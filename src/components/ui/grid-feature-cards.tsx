@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 type FeatureType = {
 	title: string;
@@ -12,20 +12,26 @@ type FeatureCardPorps = React.ComponentProps<'div'> & {
 };
 
 export function FeatureCard({ feature, className, ...props }: FeatureCardPorps) {
-	const p = genRandomPattern();
+	const [pattern, setPattern] = useState<number[][] | null>(null);
+
+	useEffect(() => {
+		setPattern(genRandomPattern());
+	}, []);
 
 	return (
 		<div className={cn('relative overflow-hidden p-6', className)} {...props}>
 			<div className="pointer-events-none absolute top-0 left-1/2 -mt-2 -ml-20 h-full w-full [mask-image:linear-gradient(white,transparent)]">
 				<div className="from-foreground/5 to-foreground/1 absolute inset-0 bg-gradient-to-r [mask-image:radial-gradient(farthest-side_at_top,white,transparent)] opacity-100">
-					<GridPattern
-						width={20}
-						height={20}
-						x="-12"
-						y="4"
-						squares={p}
-						className="fill-foreground/5 stroke-foreground/25 absolute inset-0 h-full w-full mix-blend-overlay"
-					/>
+					{pattern && (
+						<GridPattern
+							width={20}
+							height={20}
+							x="-12"
+							y="4"
+							squares={pattern}
+							className="fill-foreground/5 stroke-foreground/25 absolute inset-0 h-full w-full mix-blend-overlay"
+						/>
+					)}
 				</div>
 			</div>
 			<feature.icon className="text-foreground/75 size-6" strokeWidth={1} aria-hidden />

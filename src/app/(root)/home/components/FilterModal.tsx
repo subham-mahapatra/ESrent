@@ -75,7 +75,7 @@ function filterReducer(state: FilterState, action: FilterAction): FilterState {
   }
 }
 
-function useDebounce<Args extends any[]>(
+function useDebounce<Args extends unknown[]>(
   callback: (...args: Args) => void,
   delay: number
 ): (...args: Args) => void {
@@ -125,8 +125,8 @@ const FilterModalComponent = memo(({ onFiltersChange, shouldReset }: FilterModal
   }, []);
 
   const handleApplyFilters = useCallback(() => {
-    const { open: _open, ...filters } = state;
-    onFiltersChange(filters);
+    const { maxPrice, transmission, types, tags } = state;
+    onFiltersChange({ maxPrice, transmission, types, tags });
     dispatch({ type: 'SET_OPEN', payload: false });
   }, [state, onFiltersChange]);
 

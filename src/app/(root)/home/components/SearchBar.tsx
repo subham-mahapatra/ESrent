@@ -9,7 +9,6 @@ import { Car } from "@/types/car";
 interface AlgoliaCarResult extends Car {
   objectID?: string;
 }
-import { carsIndex } from '@/lib/algolia';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -64,14 +63,14 @@ export function SearchBar() {
       setIsLoading(true);
       try {
         // Get initial results from Algolia
-        const searchResults = []; // or mock data
+        const searchResults: AlgoliaCarResult[] = []; // or mock data
         
         // Removed Firestore data fetching, use Algolia or mock data only
         const enhancedResults = await Promise.all(
           (searchResults as AlgoliaCarResult[]).map(async (car) => {
             try {
               // Use objectID from Algolia result, fallback to id
-              const carId = car.objectID || car.id;
+              // const carId = car.objectID || car.id;
               // const carDoc = await getDoc(doc(db, 'cars', carId)); // Original line commented out
               // if (carDoc.exists()) { // Original line commented out
               //   // Merge Firestore data with Algolia data, prioritizing Firestore // Original line commented out

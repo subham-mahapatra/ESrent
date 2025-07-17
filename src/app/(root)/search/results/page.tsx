@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { ArrowLeft, MapPin, Star, Users, Fuel } from 'lucide-react'
+import { MapPin, Star, Users, Fuel } from 'lucide-react'
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -64,9 +64,9 @@ function SearchResults() {
       <div className="flex items-center space-x-4 mb-6">
         <h1 className="text-lg font-medium">
           {results.length > 0 ? (
-            <>Search Results for "{query}"</>
+            <>Search Results for &quot;{query}&quot;</>
           ) : (
-            <>No Results Found for "{query}"</>
+            <>No Results Found for &quot;{query}&quot;</>
           )}
         </h1>
       </div>

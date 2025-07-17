@@ -1,6 +1,7 @@
 'use client'; // Add this line for Swiper client-side rendering
 
 import React from 'react';
+import Image from 'next/image';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
 
@@ -63,7 +64,7 @@ const TestimonialCard: React.FC<{ quote: string; author: string; location: strin
   return (
     <div className="bg-white p-8 rounded-lg shadow-md flex flex-col items-center text-center h-full">
       {imageUrl ? (
-        <img src={imageUrl} alt={author} className="w-20 h-20 rounded-full mb-5 object-cover" />
+        <Image src={imageUrl} alt={author} width={80} height={80} className="w-20 h-20 rounded-full mb-5 object-cover" />
       ) : (
         <div className="w-20 h-20 rounded-full mb-5 bg-gray-200 flex items-center justify-center text-gray-500">
           {/* Placeholder icon or initials can go here */}
@@ -72,7 +73,7 @@ const TestimonialCard: React.FC<{ quote: string; author: string; location: strin
           </svg>
         </div>
       )}
-      <p className="text-gray-600 mb-6 text-md leading-relaxed font-sans">"{quote}"</p>
+      <p className="text-gray-600 mb-6 text-md leading-relaxed font-sans">&quot;{quote}&quot;</p>
       <div className="mt-auto">
         <p className="font-heading text-gray-900 text-lg font-semibold">
           {author}

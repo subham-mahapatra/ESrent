@@ -1,5 +1,5 @@
 import { Car, CreateCarData, UpdateCarData } from '@/types/car';
-import { Car as CarModel } from '@/lib/models/carSchema';
+import {  Car as CarModel } from '@/lib/models';
 import { dbConnect } from '@/lib/mongodb';
 
 export interface CarFilters {
@@ -67,7 +67,7 @@ export class CarService {
       const skip = (page - 1) * limit;
 
       // Build query
-      const query: any = {};
+      const query: Record<string, unknown> = {};
 
       if (filters.brand) {
         query.brand = { $regex: filters.brand, $options: 'i' };
@@ -116,7 +116,7 @@ export class CarService {
       }
 
       // Build sort object
-      const sort: any = {};
+      const sort: Record<string, unknown> = {};
       sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
       // Execute query

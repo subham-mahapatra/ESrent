@@ -16,6 +16,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { StatusModal } from '@/components/admin/status-modal';
 import Image from 'next/image';
 
+type ErrorWithMessage = { message: string };
+type ErrorWithError = { error: string };
+type ErrorWithDetails = { details: string };
+type PossibleError = string | ErrorWithMessage | ErrorWithError | ErrorWithDetails | undefined | null;
+
 export default function AdminCategories() {
   const { isAuthenticated, isInitialized } = useAuth();
   const { data, loading, error, refetch } = useCategories();
@@ -36,17 +41,22 @@ export default function AdminCategories() {
   const { toast } = useToast();
 
   // Helper to extract error message
-  function getErrorMessage(err: unknown): string {
+  function getErrorMessage(err: PossibleError): string {
     if (!err) return '';
     if (typeof err === 'string') return err;
-    if (typeof err === 'object' && 'error' in err && typeof (err as any).error === 'string') {
-      return (err as any).error;
+    if (typeof err === 'object') {
+      if ('error' in err && typeof err.error === 'string') {
+        return err.error;
+      }
+      if ('message' in err && typeof err.message === 'string') {
+        return err.message;
+      }
     }
     return 'An error occurred';
   }
-  function getErrorDetails(err: unknown): string | undefined {
-    if (err && typeof err === 'object' && 'details' in err && typeof (err as any).details === 'string') {
-      return (err as any).details;
+  function getErrorDetails(err: PossibleError): string | undefined {
+    if (err && typeof err === 'object' && 'details' in err && typeof err.details === 'string') {
+      return err.details;
     }
     return undefined;
   }
@@ -72,11 +82,11 @@ export default function AdminCategories() {
         status: 'success',
       });
       refetch();
-    } catch (error: any) {
+    } catch (error: unknown) {
       setStatusModal({
         open: true,
         title: 'Error',
-        description: error?.message || 'Failed to delete category',
+        description: getErrorMessage(error as PossibleError) || 'Failed to delete category',
         status: 'error',
       });
     } finally {
@@ -105,8 +115,8 @@ export default function AdminCategories() {
       setDialogOpen(false);
       setSelectedCategory(undefined);
       refetch();
-    } catch (error: any) {
-      toast({ title: 'Error', description: error?.message || 'Failed to save category', variant: 'destructive' });
+    } catch (error: unknown) {
+      toast({ title: 'Error', description: getErrorMessage(error as PossibleError) || 'Failed to save category', variant: 'destructive' });
       throw error;
     }
   };

@@ -1,23 +1,17 @@
 'use client'
 
-import { Suspense, useEffect, useState, Component, ReactNode, useMemo } from "react"
-import { Car } from "@/types/car"
-import { Brand } from "@/types/brand"
-import { Category } from "@/types/category"
-import { Header } from "./components/Header"
-import { SearchBar } from "./components/SearchBar"
+import { Suspense, Component, ReactNode, useMemo } from "react"
+
 
 import { FeaturedBrands } from "./components/FeaturedBrands"
 import { Categories } from "./components/Categories"
 import { FeaturedVehicles } from "./components/FeaturedVehicles"
-import { CardSkeleton, CategoryCardSkeleton } from '@/components/ui/card-skeleton';
-import { Skeleton } from '@/components/ui/skeleton';
 import TestimonialsSection from "./components/TestimonialsSection";
 import { FaWhatsapp } from "react-icons/fa";
-import { NotSureSection } from "./components/NotSureSection";
 import { HeroSection } from "./components/HeroSection";
 import DemoOne from '@/components/ui/demo';
 import { LoadingState, ErrorState, EmptyCars, EmptyBrands, EmptyCategories } from '@/components/ui/empty-state';
+import { Header } from "./components/Header"
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -58,23 +52,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   }
 }
 
-function LoadingSpinner() {
-  return (
-    <div className="grid gap-8">
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="aspect-square rounded-xl" />
-        ))}
-      </div>
-      <CategoryCardSkeleton />
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <CardSkeleton key={i} />
-        ))}
-      </div>
-    </div>
-  );
-}
+
 
 // Import API hooks
 import { useCars, useBrands, useCategories } from '@/hooks/useApi';

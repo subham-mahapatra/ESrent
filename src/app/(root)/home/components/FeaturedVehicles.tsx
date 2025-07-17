@@ -1,12 +1,9 @@
 'use client'
 import Link from 'next/link';
-import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { Car } from '@/types/car';
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FilterModal, FilterValues } from './FilterModal';
-import { FaWhatsapp } from "react-icons/fa";
 import { CarCard } from '@/components/car/CarCard';
 import { motion } from "framer-motion";
 import { EmptyCars } from '@/components/ui/empty-state';

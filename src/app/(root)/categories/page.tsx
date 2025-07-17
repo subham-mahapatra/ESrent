@@ -35,12 +35,15 @@ export default function CategoriesPage() {
       try {
         setLoading(true);
         // Fetch categories with car counts from API
-        const response = await frontendServices.getCategoriesWithCarCounts();
-        const categoriesArr: Category[] = Array.isArray((response as any)?.data)
-          ? (response as any).data
-          : Array.isArray((response as any)?.categories)
-            ? (response as any).categories
-            : [];
+        const response: unknown = await frontendServices.getCategoriesWithCarCounts();
+        let categoriesArr: Category[] = [];
+        if (typeof response === 'object' && response !== null) {
+          if (Array.isArray((response as { data?: unknown }).data)) {
+            categoriesArr = (response as { data: Category[] }).data;
+          } else if (Array.isArray((response as { categories?: unknown }).categories)) {
+            categoriesArr = (response as { categories: Category[] }).categories;
+          }
+        }
         const categoriesWithCount = categoriesArr.map((category) => ({
           ...category,
           realCarCount: category.carCount || 0

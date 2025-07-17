@@ -1,6 +1,5 @@
 'use client'
 
-import { Banknote} from 'lucide-react'
 import Image from 'next/image'
 
 interface CarRatingProps {

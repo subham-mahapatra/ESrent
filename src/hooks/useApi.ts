@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { frontendServices, PaginatedResponse } from '@/lib/services/frontendServices';
+import { frontendServices } from '@/lib/services/frontendServices';
 
 export interface UseApiState<T> {
   data: T | null;
@@ -9,30 +9,20 @@ export interface UseApiState<T> {
 
 export interface UseApiOptions {
   immediate?: boolean;
-  dependencies?: any[];
+  dependencies?: unknown[];
   cacheKey?: string;
 }
 
-// Client-side only wrapper to prevent hydration issues
-function useClientOnly() {
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  return isClient;
-}
 
 // Cache for storing API responses
-const apiCache = new Map<string, { data: any; timestamp: number }>();
+const apiCache = new Map<string, { data: unknown; timestamp: number }>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 // Debug: Track API calls
 const apiCallCounts = new Map<string, number>();
 
 // Helper function to generate stable cache keys
-function generateCacheKey(endpoint: string, params?: any): string {
+function generateCacheKey(endpoint: string, params?: Record<string, unknown>): string {
   if (!params) return endpoint;
   const sortedParams = Object.keys(params)
     .sort()
@@ -41,7 +31,7 @@ function generateCacheKey(endpoint: string, params?: any): string {
         acc[key] = params[key];
       }
       return acc;
-    }, {} as any);
+    }, {} as Record<string, unknown>);
   return `${endpoint}-${JSON.stringify(sortedParams)}`;
 }
 
@@ -86,7 +76,7 @@ export function useApi<T>(
       const cached = apiCache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
         console.log(`Cache hit for ${cacheKey}`);
-        setState({ data: cached.data, loading: false, error: null });
+        setState({ data: cached.data as T, loading: false, error: null });
         return;
       }
     }
@@ -125,7 +115,7 @@ export function useApi<T>(
         console.log('fetchData: not mounted, skipping setState (error)');
       }
     }
-  }, [memoizedApiCall, cacheKey]);
+  }, [memoizedApiCall, cacheKey, apiCall]);
 
   useEffect(() => {
     if (immediate && !hasInitializedRef.current) {
@@ -161,7 +151,7 @@ export function useCars(params?: {
   limit?: number;
   featured?: boolean;
 }) {
-  const stableParams = useMemo(() => params, [JSON.stringify(params)]);
+  const stableParams = useMemo(() => params, [params]);
   const cacheKey = useMemo(() => {
     return generateCacheKey('cars', stableParams);
   }, [stableParams]);
@@ -192,7 +182,7 @@ export function useBrands(params?: {
   page?: number;
   limit?: number;
 }) {
-  const stableParams = useMemo(() => params, [JSON.stringify(params)]);
+  const stableParams = useMemo(() => params, [params]);
   const cacheKey = useMemo(() => {
     return generateCacheKey('brands', stableParams);
   }, [stableParams]);
@@ -224,7 +214,7 @@ export function useCategories(params?: {
   page?: number;
   limit?: number;
 }) {
-  const stableParams = useMemo(() => params, [JSON.stringify(params)]);
+  const stableParams = useMemo(() => params, [params]);
   const cacheKey = useMemo(() => {
     return generateCacheKey('categories', stableParams);
   }, [stableParams]);

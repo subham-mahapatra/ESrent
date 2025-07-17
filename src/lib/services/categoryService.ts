@@ -1,6 +1,5 @@
 import { Category, CreateCategoryData, UpdateCategoryData } from '@/types/category';
-import { Category as CategoryModel } from '@/lib/models/categorySchema';
-import { Car as CarModel } from '@/lib/models/carSchema';
+import { Category as CategoryModel, Car as CarModel } from '@/lib/models';
 import { dbConnect } from '@/lib/mongodb';
 
 export interface CategoryFilters {
@@ -74,7 +73,7 @@ export class CategoryService {
       const skip = (page - 1) * limit;
 
       // Build query
-      const query: any = {};
+      const query: Record<string, unknown> = {};
 
       if (filters.type) {
         query.type = filters.type;
@@ -89,7 +88,7 @@ export class CategoryService {
       }
 
       // Build sort object
-      const sort: any = {};
+      const sort: Record<string, unknown> = {};
       sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
       // Execute query
