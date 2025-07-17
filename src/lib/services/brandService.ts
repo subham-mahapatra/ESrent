@@ -83,7 +83,7 @@ export class BrandService {
       }
 
       // Build sort object
-      const sort: Record<string, unknown> = {};
+      const sort: { [key: string]: 1 | -1 } = {};
       sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
       // Execute query
@@ -99,12 +99,13 @@ export class BrandService {
       const totalPages = Math.ceil(total / limit);
 
       return {
-        brands: brands.map(brand => ({
-          ...brand,
-          id: brand._id.toString(),
-          _id: undefined,
-          __v: undefined
-        })),
+        brands: brands.map(brand => {
+          const { _id, __v, ...rest } = brand as any;
+          return {
+            ...rest,
+            id: _id.toString(),
+          } as Brand;
+        }),
         total,
         page,
         totalPages
@@ -158,12 +159,13 @@ export class BrandService {
         .limit(limit)
         .lean();
 
-      return brands.map(brand => ({
-        ...brand,
-        id: brand._id.toString(),
-        _id: undefined,
-        __v: undefined
-      }));
+      return brands.map(brand => {
+        const { _id, __v, ...rest } = brand as any;
+        return {
+          ...rest,
+          id: _id.toString(),
+        } as Brand;
+      });
     } catch (error) {
       console.error('Error getting featured brands:', error);
       throw new Error('Failed to get featured brands');
@@ -183,12 +185,13 @@ export class BrandService {
         .limit(limit)
         .lean();
 
-      return brands.map(brand => ({
-        ...brand,
-        id: brand._id.toString(),
-        _id: undefined,
-        __v: undefined
-      }));
+      return brands.map(brand => {
+        const { _id, __v, ...rest } = brand as any;
+        return {
+          ...rest,
+          id: _id.toString(),
+        } as Brand;
+      });
     } catch (error) {
       console.error('Error searching brands:', error);
       throw new Error('Failed to search brands');

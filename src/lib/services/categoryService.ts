@@ -88,7 +88,7 @@ export class CategoryService {
       }
 
       // Build sort object
-      const sort: Record<string, unknown> = {};
+      const sort: { [key: string]: 1 | -1 } = {};
       sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
       // Execute query
@@ -104,12 +104,13 @@ export class CategoryService {
       const totalPages = Math.ceil(total / limit);
 
       return {
-        categories: categories.map(category => ({
-          ...category,
-          id: category._id.toString(),
-          _id: undefined,
-          __v: undefined
-        })),
+        categories: categories.map(category => {
+          const { _id, __v, ...rest } = category as any;
+          return {
+            ...rest,
+            id: _id.toString(),
+          } as Category;
+        }),
         total,
         page,
         totalPages
@@ -162,12 +163,13 @@ export class CategoryService {
         .sort({ name: 1 })
         .lean();
 
-      return categories.map(category => ({
-        ...category,
-        id: category._id.toString(),
-        _id: undefined,
-        __v: undefined
-      }));
+      return categories.map(category => {
+        const { _id, __v, ...rest } = category as any;
+        return {
+          ...rest,
+          id: _id.toString(),
+        } as Category;
+      });
     } catch (error) {
       console.error('Error getting categories by type:', error);
       throw new Error('Failed to get categories by type');
@@ -185,12 +187,13 @@ export class CategoryService {
         .limit(limit)
         .lean();
 
-      return categories.map(category => ({
-        ...category,
-        id: category._id.toString(),
-        _id: undefined,
-        __v: undefined
-      }));
+      return categories.map(category => {
+        const { _id, __v, ...rest } = category as any;
+        return {
+          ...rest,
+          id: _id.toString(),
+        } as Category;
+      });
     } catch (error) {
       console.error('Error getting featured categories:', error);
       throw new Error('Failed to get featured categories');
@@ -210,12 +213,13 @@ export class CategoryService {
         .limit(limit)
         .lean();
 
-      return categories.map(category => ({
-        ...category,
-        id: category._id.toString(),
-        _id: undefined,
-        __v: undefined
-      }));
+      return categories.map(category => {
+        const { _id, __v, ...rest } = category as any;
+        return {
+          ...rest,
+          id: _id.toString(),
+        } as Category;
+      });
     } catch (error) {
       console.error('Error searching categories:', error);
       throw new Error('Failed to search categories');
@@ -343,13 +347,14 @@ export class CategoryService {
               break;
           }
 
+          const { _id, __v, ...rest } = category as any;
           return {
-            ...category,
-            id: category._id.toString(),
+            ...rest,
+            id: _id.toString(),
             _id: undefined,
             __v: undefined,
             carCount
-          };
+          } as Category;
         })
       );
 
