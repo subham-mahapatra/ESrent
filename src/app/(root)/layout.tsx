@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 
 import "../globals.css";
 import Footer from "@/components/Footer";
-// import CrispChat from "@/components/CrispChat";
 
 export const metadata: Metadata = {
   title: "Autoluxe - Luxury Car Rental in Dubai",

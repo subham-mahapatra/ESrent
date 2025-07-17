@@ -11,6 +11,7 @@ import { ErrorState } from "@/components/ui/empty-state"
 import { useBrand, useCars } from "@/hooks/useApi"
 import { ArrowLeft, CarIcon, MapPin, Calendar } from "lucide-react"
 import Image from 'next/image';
+import { Car } from "@/types/car";
 
 export default function BrandPage() {
   const params = useParams()
@@ -25,7 +26,7 @@ export default function BrandPage() {
 
   const { data: brandData, loading: brandLoading, error: brandError } = useBrand(id)
   const brand = brandData
-  const { data: carsData, loading: carsLoading, error: carsError } = useCars(id ? { brandId: id } : undefined)
+  const { data: carsData, loading: carsLoading, error: carsError } = useCars(id ? { brand: id } : undefined)
   const cars = carsData?.data || []
 
   if (!isClient) {
@@ -86,8 +87,8 @@ export default function BrandPage() {
               <div className="flex-shrink-0">
                 {brand.logo ? (
                   <Image
-                    src={brand.logo}
-                    alt={brand.name}
+                    src={typeof brand.logo === "string" ? brand.logo : "/fallback.png"}
+                    alt={typeof brand.name === "string" ? brand.name : "Brand Logo"}
                     width={64}
                     height={64}
                     className="rounded-full"
@@ -102,13 +103,17 @@ export default function BrandPage() {
               {/* Brand Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-4">
-                  <h1 className="text-4xl md:text-5xl font-bold text-white">{brand.name}</h1>
+                  <h1 className="text-4xl md:text-5xl font-bold text-white">
+                    {typeof brand.name === "string" ? brand.name : ""}
+                  </h1>
                   <Badge variant="secondary" className="text-sm bg-gray-700 text-gray-200 border-gray-600">
                     {cars.length} {cars.length === 1 ? "Car" : "Cars"}
                   </Badge>
                 </div>
 
-                {brand.description && <p className="text-lg text-gray-300 leading-relaxed mb-6">{brand.description}</p>}
+                {typeof brand.description === "string" && (
+                  <p className="text-lg text-gray-300 leading-relaxed mb-6">{brand.description}</p>
+                )}
 
                 {/* Brand Stats */}
                 <div className="flex flex-wrap gap-6 text-sm text-gray-400">
@@ -116,13 +121,13 @@ export default function BrandPage() {
                     <CarIcon className="w-4 h-4" />
                     <span>{cars.length} vehicles available</span>
                   </div>
-                  {brand.country && (
+                  {typeof brand.country === "string" && (
                     <div className="flex items-center gap-2">
                       <MapPin className="w-4 h-4" />
                       <span>{brand.country}</span>
                     </div>
                   )}
-                  {brand.founded && (
+                  {typeof brand.founded === "string" && (
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4" />
                       <span>Founded {brand.founded}</span>
@@ -141,7 +146,9 @@ export default function BrandPage() {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-3xl font-bold text-white mb-2">Available Vehicles</h2>
-              <p className="text-gray-400">Explore our collection of {brand.name} vehicles</p>
+              <p className="text-gray-400">
+                Explore our collection of {typeof brand.name === "string" ? brand.name : ""} vehicles
+              </p>
             </div>
           </div>
 
@@ -152,8 +159,7 @@ export default function BrandPage() {
               </div>
               <h3 className="text-2xl font-semibold text-white mb-4">No vehicles available</h3>
               <p className="text-gray-400 mb-8 max-w-md mx-auto">
-                We don&apos;t have any {brand.name} vehicles in our inventory at the moment. Check back later for new
-                arrivals.
+                We don&apos;t have any {typeof brand.name === "string" ? brand.name : ""} vehicles in our inventory at the moment. Check back later for new arrivals.
               </p>
               <Button
                 variant="outline"
@@ -166,9 +172,9 @@ export default function BrandPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {cars.map((car) => (
-                <div key={car.id} className="group">
+                <div key={typeof car.id === "string" || typeof car.id === "number" ? car.id : undefined} className="group">
                   <CarCard
-                    car={car}
+                    car={car as unknown as Car}
                     onClick={() => {
                       if (isClient && typeof window !== "undefined") {
                         localStorage.setItem("previousPage", "brand")
