@@ -69,7 +69,7 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
   const categoriesArray: Category[] = useMemo(() => {
     if (categories && typeof categories === 'object') {
       if (Array.isArray((categories as { data?: unknown }).data)) {
-        return (categories as { data: Category[] }).data;
+        return ((categories as { data: unknown }).data as unknown as Category[]);
       }
       if (Array.isArray(((categories as unknown) as { categories?: unknown }).categories)) {
         return ((categories as unknown) as { categories: Category[] }).categories;
@@ -227,7 +227,7 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
                 <Select
                   value={formData.brandId || ''}
                   onValueChange={(value) => {
-                    const selectedBrand = brands?.data?.find((b: Brand) => b.id === value);
+                    const selectedBrand = (brands?.data as unknown as Brand[])?.find((b: Brand) => b.id === value);
                     setFormData({
                       ...formData,
                       brand: selectedBrand?.name || '',
@@ -244,7 +244,7 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
                       <div className="px-2 py-1 text-red-500 text-sm">Failed to load brands</div>
                     )}
                     {brands?.data && Array.isArray(brands.data) && brands.data.length > 0 ? (
-                      brands.data.map((brand: Brand) => (
+                      (brands.data as unknown as Brand[]).map((brand: Brand) => (
                         <SelectItem key={brand.id} value={brand.id}>
                           {brand.name}
                         </SelectItem>

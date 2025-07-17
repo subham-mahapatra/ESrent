@@ -1,4 +1,4 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { Schema, model, Model } from 'mongoose';
 
 export interface ICar {
   brand: string;
@@ -149,17 +149,4 @@ carSchema.index({ isAvailable: 1 });
 carSchema.index({ dailyPrice: 1 });
 carSchema.index({ name: 'text', brand: 'text', model: 'text' });
 
-let Car;
-try {
-  // Check if mongoose.models exists and Car is defined
-  if (mongoose.models && mongoose.models.Car) {
-    Car = mongoose.models.Car;
-  } else {
-    Car = mongoose.model<ICar>('Car', carSchema);
-  }
-} catch {
-  // Fallback: define the model if not already defined
-  Car = mongoose.model<ICar>('Car', carSchema);
-}
-
-export { Car }; 
+export const Car: Model<ICar> = mongoose.models.Car || model<ICar>('Car', carSchema); 

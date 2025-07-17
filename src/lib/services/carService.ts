@@ -1,6 +1,8 @@
 import { Car, CreateCarData, UpdateCarData } from '@/types/car';
-import {  Car as CarModel } from '@/lib/models';
+import { Car as CarModel } from '@/lib/models';
 import { dbConnect } from '@/lib/mongodb';
+import type { ICar } from '@/lib/models/carSchema';
+import { Model } from 'mongoose';
 
 export interface CarFilters {
   brand?: string;
@@ -32,7 +34,11 @@ export class CarService {
       await dbConnect();
       const car = new CarModel(carData);
       const savedCar = await car.save();
-      return savedCar.toJSON();
+      const carObj = savedCar.toJSON();
+      (carObj as any).id = carObj._id?.toString();
+      if ('_id' in carObj) delete (carObj as any)._id;
+      if ('__v' in carObj) delete (carObj as any).__v;
+      return carObj as unknown as Car;
     } catch (error) {
       console.error('Error creating car:', error);
       throw new Error('Failed to create car');
@@ -46,7 +52,12 @@ export class CarService {
     try {
       await dbConnect();
       const car = await CarModel.findById(id);
-      return car ? car.toJSON() : null;
+      if (!car) return null;
+      const carObj = car.toJSON();
+      (carObj as any).id = carObj._id?.toString();
+      if ('_id' in carObj) delete (carObj as any)._id;
+      if ('__v' in carObj) delete (carObj as any).__v;
+      return carObj as unknown as Car;
     } catch (error) {
       console.error('Error getting car by ID:', error);
       throw new Error('Failed to get car');
@@ -67,7 +78,7 @@ export class CarService {
       const skip = (page - 1) * limit;
 
       // Build query
-      const query: Record<string, unknown> = {};
+      const query: Record<string, any> = {};
 
       if (filters.brand) {
         query.brand = { $regex: filters.brand, $options: 'i' };
@@ -86,7 +97,7 @@ export class CarService {
       }
 
       if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
-        query.dailyPrice = {};
+        query.dailyPrice = {} as { $gte?: number; $lte?: number };
         if (filters.minPrice !== undefined) {
           query.dailyPrice.$gte = filters.minPrice;
         }
@@ -116,7 +127,7 @@ export class CarService {
       }
 
       // Build sort object
-      const sort: Record<string, unknown> = {};
+      const sort: { [key: string]: 1 | -1 } = {};
       sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
       // Execute query
@@ -134,12 +145,12 @@ export class CarService {
       const totalPages = Math.ceil(total / limit);
 
       return {
-        cars: cars.map(car => ({
-          ...car,
-          id: car._id.toString(),
-          _id: undefined,
-          __v: undefined
-        })),
+        cars: cars.map(car => {
+          (car as any).id = car._id?.toString();
+          if ('_id' in car) delete (car as any)._id;
+          if ('__v' in car) delete (car as any).__v;
+          return car as unknown as Car;
+        }),
         total,
         page,
         totalPages
@@ -161,7 +172,12 @@ export class CarService {
         { ...updateData, updatedAt: new Date() },
         { new: true, runValidators: true }
       );
-      return car ? car.toJSON() : null;
+      if (!car) return null;
+      const carObj = car.toJSON();
+      (carObj as any).id = carObj._id?.toString();
+      if ('_id' in carObj) delete (carObj as any)._id;
+      if ('__v' in carObj) delete (carObj as any).__v;
+      return carObj as unknown as Car;
     } catch (error) {
       console.error('Error updating car:', error);
       throw new Error('Failed to update car');
@@ -195,7 +211,7 @@ export class CarService {
 
       return cars.map(car => ({
         ...car,
-        id: car._id.toString(),
+        id: car._id?.toString(),
         _id: undefined,
         __v: undefined
       }));
@@ -221,7 +237,7 @@ export class CarService {
 
       return cars.map(car => ({
         ...car,
-        id: car._id.toString(),
+        id: car._id?.toString(),
         _id: undefined,
         __v: undefined
       }));
@@ -247,7 +263,7 @@ export class CarService {
 
       return cars.map(car => ({
         ...car,
-        id: car._id.toString(),
+        id: car._id?.toString(),
         _id: undefined,
         __v: undefined
       }));
@@ -273,7 +289,7 @@ export class CarService {
 
       return cars.map(car => ({
         ...car,
-        id: car._id.toString(),
+        id: car._id?.toString(),
         _id: undefined,
         __v: undefined
       }));

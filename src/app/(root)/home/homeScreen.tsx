@@ -12,6 +12,9 @@ import { HeroSection } from "./components/HeroSection";
 import DemoOne from '@/components/ui/demo';
 import { LoadingState, ErrorState, EmptyCars, EmptyBrands, EmptyCategories } from '@/components/ui/empty-state';
 import { Header } from "./components/Header"
+import { Brand } from '@/types/brand';
+import { Car } from '@/types/car';
+import { Category } from '@/types/category';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -140,7 +143,7 @@ function FeaturedContent() {
   return (
     <>
       {validBrands.length > 0 ? (
-        <FeaturedBrands brands={validBrands} />
+        <FeaturedBrands brands={validBrands as unknown as Brand[]} />
       ) : (
         <div className="mt-8 px-4 sm:px-6 pb-8">
           <EmptyBrands />
@@ -148,7 +151,7 @@ function FeaturedContent() {
       )}
       
       {validCars.length > 0 ? (
-        <FeaturedVehicles cars={validCars} />
+        <FeaturedVehicles cars={validCars as unknown as Car[]} />
       ) : (
         <div className="mt-8 px-4 sm:px-6 pb-8">
           <EmptyCars />
@@ -158,7 +161,7 @@ function FeaturedContent() {
       <DemoOne />
       
       {validCategories.length > 0 ? (
-        <Categories categories={validCategories} />
+        <Categories categories={validCategories as unknown as Category[]} />
       ) : (
         <div className="mt-8 px-4 sm:px-6 pb-8">
           <EmptyCategories />

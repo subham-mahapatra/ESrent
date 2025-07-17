@@ -72,7 +72,7 @@ export default function CarsPage() {
   // Update cars when data changes
   useEffect(() => {
     if (carsData?.data) {
-      const allCars: Car[] = carsData.data;
+      const allCars: Car[] = carsData.data as unknown as Car[];
       setCars(allCars);
       setFilteredCars(allCars);
     }

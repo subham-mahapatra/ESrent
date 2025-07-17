@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { FaWhatsapp } from "react-icons/fa"
+import { useCarHire } from '@/hooks/useCarHire';
 
 interface CarPricingProps {
   car: {

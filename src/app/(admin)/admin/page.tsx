@@ -6,6 +6,14 @@ import { AlertCircle } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useCars } from '@/hooks/useApi';
 
+type Car = {
+  id: string;
+  name: string;
+  brand: string;
+  category?: string;
+  dailyPrice: number;
+};
+
 export default function AdminDashboard() {
   const carsParams = useMemo(() => ({ limit: 5 }), []);
   const { data: carsData, loading: carsLoading, error: carsError } = useCars(carsParams);
@@ -109,7 +117,7 @@ export default function AdminDashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {cars.slice(0, 5).map((car) => (
+                  {(cars as Car[]).slice(0, 5).map((car) => (
                     <TableRow key={car.id}>
                       <TableCell className="font-medium">{car.id.slice(0, 8)}</TableCell>
                       <TableCell>{car.name}</TableCell>

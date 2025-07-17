@@ -78,7 +78,7 @@ export function CategoryDialog({ open, onOpenChange, category, onSave }: Categor
 
       // Upload to backend with Authorization header
       const categoryId = category?.id || 'temp-' + Date.now();
-      const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+      const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') || undefined : undefined;
       const imageUrl = await uploadImage(file, `categories/${categoryId}/image`, token);
 
       // Update form data with the new image URL

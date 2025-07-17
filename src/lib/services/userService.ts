@@ -91,12 +91,13 @@ export class UserService {
         .sort({ createdAt: -1 })
         .lean();
 
-      return users.map(user => ({
-        ...user,
-        id: user._id.toString(),
-        _id: undefined,
-        __v: undefined
-      }));
+      return users.map(user => {
+        const { _id, __v, ...rest } = user;
+        return {
+          ...rest,
+          id: _id?.toString(),
+        } as User;
+      });
     } catch (error) {
       console.error('Error getting all users:', error);
       throw new Error('Failed to get users');

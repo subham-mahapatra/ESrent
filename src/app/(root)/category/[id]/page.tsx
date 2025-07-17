@@ -27,18 +27,18 @@ export default function CategoryPage() {
       if (!category) {
         // If not found by ID, try by name (fallback)
         category = categoriesResponse.categories.find(cat => 
-          cat.name.toLowerCase() === decodedId.toLowerCase()
+          (cat as any).name.toLowerCase() === decodedId.toLowerCase()
         );
       }
       
       if (category) {
-        setCategoryName(category.name);
+        setCategoryName((category as any).name);
         // Use categoryId to fetch cars
         const response = await frontendServices.getCars({ 
-          categoryId: category.id,
+          categoryId: (category as any).id,
           limit: 50 // Get more cars for category pages
         });
-        setCars(response.data || []);
+        setCars((response.data as unknown as Car[]) || []);
       } else {
         // Fallback to category name if ID not found
         setCategoryName(decodedId);
@@ -46,7 +46,7 @@ export default function CategoryPage() {
           category: decodedId,
           limit: 50
         });
-        setCars(response.data || []);
+        setCars((response.data as unknown as Car[]) || []);
       }
     } catch (error) {
       console.error('Error loading cars:', error);

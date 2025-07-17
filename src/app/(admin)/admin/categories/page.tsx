@@ -200,7 +200,7 @@ export default function AdminCategories() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(Array.isArray(data?.data) ? data.data : []).map((category: Category) => (
+                  {((Array.isArray(data?.data) ? data.data : []) as unknown as Category[]).map((category) => (
                     <TableRow key={category.id} className="transition-colors hover:bg-muted/50">
                       <TableCell>
                         {category.image ? (
