@@ -52,7 +52,7 @@ export function BrandDialog({ brand, open, onOpenChange, onSave }: BrandDialogPr
 
       // Upload logo to backend with Authorization header
       const tempId = brand?.id || 'temp-' + Date.now();
-      const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+      const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') ?? undefined : undefined;
       const uploadedUrl = await uploadImage(file, `brands/${tempId}/logo`, token);
 
       // Update form data with new logo URL

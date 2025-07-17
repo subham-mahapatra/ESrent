@@ -2,15 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { CategoryService } from '@/lib/services/categoryService';
 import { requireAdmin } from '@/lib/middleware/auth';
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(request: NextRequest) {
   try {
-    const { id } = params;
+    const url = new URL(request.url);
+    const id = url.pathname.split('/').pop();
     
     if (!id) {
       return NextResponse.json(
@@ -38,13 +33,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export async function PUT(request: NextRequest) {
   try {
     // Check authentication
     const authResult = await requireAdmin(request);
     if (authResult) return authResult;
 
-    const { id } = params;
+    const url = new URL(request.url);
+    const id = url.pathname.split('/').pop();
     const body = await request.json();
     
     if (!id) {
@@ -84,13 +80,14 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(request: NextRequest) {
   try {
     // Check authentication
     const authResult = await requireAdmin(request);
     if (authResult) return authResult;
 
-    const { id } = params;
+    const url = new URL(request.url);
+    const id = url.pathname.split('/').pop();
     
     if (!id) {
       return NextResponse.json(
