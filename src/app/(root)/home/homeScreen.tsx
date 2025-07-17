@@ -151,7 +151,7 @@ function FeaturedContent() {
       )}
       
       {validCars.length > 0 ? (
-        <FeaturedVehicles cars={validCars as unknown as Car[]} />
+        <FeaturedVehicles cars={validCars as unknown as Car[]} categories={validCategories as unknown as Category[]} />
       ) : (
         <div className="mt-8 px-4 sm:px-6 pb-8">
           <EmptyCars />

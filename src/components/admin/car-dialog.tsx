@@ -35,23 +35,20 @@ const defaultCar: Partial<Car> = {
   brand: '',
   model: '',
   year: new Date().getFullYear(),
-  transmission: 'Automatic',
-  fuel: 'Petrol',
   mileage: 0,
   dailyPrice: 0,
   images: [],
   description: '',
   features: [],
-  category: '',
-  isAvailable: true,
-  isFeatured: false,
+  available: true,
+  featured: false,
 };
 
 export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
   const [formData, setFormData] = useState<Partial<Car>>(car || defaultCar);
   const [uploading, setUploading] = useState(false);
   const [previewImages, setPreviewImages] = useState<string[]>(car?.images || []);
-  const [tagsInput, setTagsInput] = useState<string>(car?.tags ? car.tags.join(', ') : '');
+  const [tagsInput, setTagsInput] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -79,6 +76,8 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
   }, [categories]);
   const carTypeCategories: Category[] = categoriesArray.filter((cat) => cat.type === 'carType');
   const fuelTypeCategories: Category[] = categoriesArray.filter((cat) => cat.type === 'fuelType');
+  const transmissionCategories: Category[] = categoriesArray.filter((cat) => cat.type === 'transmission');
+  const tagCategories: Category[] = categoriesArray.filter((cat) => cat.type === 'tag');
   
   useEffect(() => {
     if (categories) {
@@ -155,16 +154,24 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
       alert('Valid year is required');
       return;
     }
+    if (!formData.mileage || formData.mileage <= 0) {
+      alert('Valid mileage is required');
+      return;
+    }
     if (!formData.dailyPrice || formData.dailyPrice <= 0) {
       alert('Valid daily price is required');
       return;
     }
-    if (!formData.fuel?.trim()) {
+    if (!formData.carTypeIds || formData.carTypeIds.length === 0) {
+      alert('Car type is required');
+      return;
+    }
+    if (!formData.fuelTypeIds || formData.fuelTypeIds.length === 0) {
       alert('Fuel type is required');
       return;
     }
-    if (!formData.category?.trim()) {
-      alert('Category/Type is required');
+    if (!formData.transmissionIds || formData.transmissionIds.length === 0) {
+      alert('Transmission is required');
       return;
     }
     
@@ -173,27 +180,25 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
     // Map frontend Car interface to server expected format
     const carData = {
       // Required fields for server
-      name: formData.name.trim(),
-      brand: formData.brand.trim(),
+      name: formData.name?.trim() || '',
+      brand: formData.brand?.trim() || '',
       brandId: formData.brandId,
-      model: formData.model?.trim() || formData.name.trim(),
+      model: formData.model?.trim() || formData.name?.trim() || '',
       year: formData.year || new Date().getFullYear(),
-      transmission: formData.transmission || 'Automatic',
-      fuel: formData.fuel || 'Petrol',
       dailyPrice: formData.dailyPrice || 0,
-      category: formData.category || 'Sedan',
-      categoryId: formData.categoryId,
-      // Optional fields
       mileage: formData.mileage || 0,
       images: formData.images || [],
       description: formData.description || '',
       features: formData.features || [],
-      available: formData.isAvailable ?? true,
-      featured: formData.isFeatured ?? false,
+      available: formData.available ?? true,
+      featured: formData.featured ?? false,
       engine: formData.engine,
       power: formData.power,
-      tags: tagsArray,
       seater: formData.seater,
+      carTypeIds: formData.carTypeIds || [],
+      transmissionIds: formData.transmissionIds || [],
+      fuelTypeIds: formData.fuelTypeIds || [],
+      tagIds: formData.tagIds || [],
     };
     
     await onSave(carData);
@@ -275,6 +280,16 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="mileage" className="text-card-foreground">Mileage *</Label>
+                <Input
+                  id="mileage"
+                  type="number"
+                  value={formData.mileage || ''}
+                  onChange={(e) => setFormData({ ...formData, mileage: parseInt(e.target.value) || 0 })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="engine" className="text-card-foreground">Engine</Label>
                 <Input
                   id="engine"
@@ -300,16 +315,6 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
                   onChange={(e) => setFormData({ ...formData, seater: parseInt(e.target.value) || undefined })}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="tags" className="text-card-foreground">Tags (comma separated)</Label>
-                <Input
-                  id="tags"
-                  value={tagsInput}
-                  onChange={(e) => setTagsInput(e.target.value)}
-                  onBlur={() => setFormData({ ...formData, tags: tagsInput.split(',').map(tag => tag.trim()).filter(Boolean) })}
-                  placeholder="e.g. Luxury, Family, Sports"
-                />
-              </div>
             </div>
           </div>
 
@@ -317,59 +322,94 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-card-foreground">Technical Specifications</h3>
             <div className="grid grid-cols-2 gap-4">
+              {/* Car Types dropdown single-select */}
               <div className="space-y-2">
-                <Label htmlFor="transmission" className="text-card-foreground">Transmission</Label>
+                <Label className="text-card-foreground">Car Type</Label>
                 <Select
-                  value={formData.transmission || 'Automatic'}
-                  onValueChange={(value) => setFormData({ ...formData, transmission: value as 'Manual' | 'Automatic' | 'CVT' | 'Semi-Automatic'})}
+                  value={formData.carTypeIds?.[0] || ''}
+                  onValueChange={(value) => setFormData({ ...formData, carTypeIds: [value] })}
+                  disabled={categoriesLoading}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select transmission" />
+                    <SelectValue placeholder={categoriesLoading ? 'Loading car types...' : 'Select car type'} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Automatic">Automatic</SelectItem>
-                    <SelectItem value="Manual">Manual</SelectItem>
-                    <SelectItem value="CVT">CVT</SelectItem>
-                    <SelectItem value="Semi-Automatic">Semi-Automatic</SelectItem>
+                    {carTypeCategories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id || ''}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Transmission dropdown single-select */}
+              <div className="space-y-2">
+                <Label className="text-card-foreground">Transmission</Label>
+                <Select
+                  value={formData.transmissionIds?.[0] || ''}
+                  onValueChange={(value) => setFormData({ ...formData, transmissionIds: [value] })}
+                  disabled={categoriesLoading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={categoriesLoading ? 'Loading transmissions...' : 'Select transmission'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {transmissionCategories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id || ''}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Fuel Types dropdown single-select */}
               <div className="space-y-2">
                 <Label className="text-card-foreground">Fuel Type</Label>
                 <Select
-                  value={formData.fuel || ''}
-                  onValueChange={(value: string) => setFormData({ ...formData, fuel: value })}
+                  value={formData.fuelTypeIds?.[0] || ''}
+                  onValueChange={(value) => setFormData({ ...formData, fuelTypeIds: [value] })}
                   disabled={categoriesLoading}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder={categoriesLoading ? 'Loading fuel types...' : 'Select fuel type'} />
                   </SelectTrigger>
                   <SelectContent>
-                    {categoriesError && (
-                      <div className="px-2 py-1 text-red-500 text-sm">Failed to load fuel types</div>
-                    )}
-                    {fuelTypeCategories.length > 0 ? (
-                      fuelTypeCategories.map((cat: Category) => (
-                        <SelectItem key={cat.id} value={cat.name || ''}>
-                          {cat.name}
-                        </SelectItem>
-                      ))
-                    ) : !categoriesLoading && !categoriesError ? (
-                      <div className="px-2 py-1 text-muted-foreground text-sm">No fuel types found</div>
-                    ) : null}
+                    {fuelTypeCategories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id || ''}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="mileage" className="text-card-foreground">Mileage</Label>
-                <Input
-                  id="mileage"
-                  type="number"
-                  value={formData.mileage || ''}
-                  onChange={(e) => setFormData({ ...formData, mileage: parseInt(e.target.value) || 0 })}
-                />
-              </div>
 
+              {/* Tags remains as checkbox-based multi-select */}
+              <div className="space-y-2">
+                <Label className="text-card-foreground">Tags</Label>
+                <div className="flex flex-wrap gap-2">
+                  {tagCategories.map((cat) => (
+                    <label key={cat.id} className="flex items-center gap-1">
+                      <input
+                        type="checkbox"
+                        checked={!!cat.id && (formData.tagIds || []).includes(cat.id as string)}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          if (!cat.id) return;
+                          setFormData((prev) => ({
+                            ...prev,
+                            tagIds: checked
+                              ? [...((prev.tagIds || []).filter((id): id is string => !!id)), cat.id as string]
+                              : (prev.tagIds || []).filter((id): id is string => !!id && id !== cat.id),
+                          }));
+                        }}
+                      />
+                      {cat.name}
+                    </label>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -387,39 +427,6 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
                   required
                 />
               </div>
-              <div className="space-y-2">
-                <Label className="text-card-foreground">Car Type *</Label>
-                <Select
-                  value={formData.categoryId || ''}
-                  onValueChange={(value: string) => {
-                    const selectedCategory = carTypeCategories.find((cat: Category) => cat.id === value);
-                    setFormData({
-                      ...formData,
-                      category: selectedCategory?.name || '',
-                      categoryId: selectedCategory?.id || ''
-                    });
-                  }}
-                  disabled={categoriesLoading}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={categoriesLoading ? 'Loading car types...' : 'Select car type'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categoriesError && (
-                      <div className="px-2 py-1 text-red-500 text-sm">Failed to load car types</div>
-                    )}
-                    {carTypeCategories.length > 0 ? (
-                      carTypeCategories.map((cat: Category) => (
-                        <SelectItem key={cat.id} value={cat.id ? String(cat.id) : ''}>
-                          {cat.name}
-                        </SelectItem>
-                      ))
-                    ) : !categoriesLoading && !categoriesError ? (
-                      <div className="px-2 py-1 text-muted-foreground text-sm">No car types found</div>
-                    ) : null}
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
           </div>
 
@@ -430,16 +437,16 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
               <div className="flex items-center space-x-2">
                 <Switch
                   id="isAvailable"
-                  checked={formData.isAvailable ?? true}
-                  onCheckedChange={(checked) => setFormData({ ...formData, isAvailable: checked })}
+                  checked={formData.available ?? true}
+                  onCheckedChange={(checked) => setFormData({ ...formData, available: checked })}
                 />
                 <Label htmlFor="isAvailable" className="text-card-foreground">Available for Rent</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <Switch
                   id="isFeatured"
-                  checked={formData.isFeatured ?? false}
-                  onCheckedChange={(checked) => setFormData({ ...formData, isFeatured: checked })}
+                  checked={formData.featured ?? false}
+                  onCheckedChange={(checked) => setFormData({ ...formData, featured: checked })}
                 />
                 <Label htmlFor="isFeatured" className="text-card-foreground">Featured</Label>
               </div>

@@ -10,6 +10,7 @@ import { Calendar } from 'lucide-react'
 import { CarCard } from '@/components/car/CarCard'
 import { format, addDays } from 'date-fns';
 import { useCars } from '@/hooks/useApi';
+import { useCategories } from '@/hooks/useApi';
 import { HydrationSafe } from '@/components/ui/hydration-safe';
 
 const ITEMS_PER_PAGE = 12
@@ -68,6 +69,30 @@ export default function CarsPage() {
 
   // Use API hook for cars
   const { data: carsData, loading: carsLoading } = useCars({ limit: 100 });
+  const { data: categoriesData, loading: categoriesLoading } = useCategories();
+  const categories = useMemo(() => categoriesData?.data || [], [categoriesData]);
+
+  // Build lookup maps
+  const carTypeMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    categories.filter((c: any) => c.type === 'carType').forEach((c: any) => { if (c.id) map[c.id] = c.name; });
+    return map;
+  }, [categories]);
+  const transmissionMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    categories.filter((c: any) => c.type === 'transmission').forEach((c: any) => { if (c.id) map[c.id] = c.name; });
+    return map;
+  }, [categories]);
+  const fuelTypeMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    categories.filter((c: any) => c.type === 'fuelType').forEach((c: any) => { if (c.id) map[c.id] = c.name; });
+    return map;
+  }, [categories]);
+  const tagMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    categories.filter((c: any) => c.type === 'tag').forEach((c: any) => { if (c.id) map[c.id] = c.name; });
+    return map;
+  }, [categories]);
 
   // Update cars when data changes
   useEffect(() => {
@@ -89,14 +114,14 @@ export default function CarsPage() {
     setCurrentPage(1) // Reset to first page when filters change
 
     const filtered = cars.filter(car => {
-      const matchesPrice = car.dailyPrice >= 1000 && car.dailyPrice <= filters.maxPrice
-      const matchesTransmission = !filters.transmission || 
-                               car.transmission.toLowerCase() === filters.transmission.toLowerCase()
-      const matchesCategory = filters.types.length === 0 || 
-                       (car.category && filters.types.includes(car.category.toLowerCase()))
-
-      return matchesPrice && matchesTransmission && matchesCategory
-    })
+      const matchesPrice = car.dailyPrice >= 1000 && car.dailyPrice <= filters.maxPrice;
+      const matchesTransmission = !filters.transmission ||
+        (Array.isArray(car.transmissionIds) && car.transmissionIds[0] && car.transmissionIds[0] === filters.transmission);
+      const matchesCategory = filters.types.length === 0 ||
+        (Array.isArray(car.carTypeIds) && car.carTypeIds[0] && filters.types.includes(car.carTypeIds[0]));
+      // You may want to map IDs to names for a better UX
+      return matchesPrice && matchesTransmission && matchesCategory;
+    });
 
     setFilteredCars(filtered)
   }
@@ -123,7 +148,7 @@ export default function CarsPage() {
     selectedFilters.transmission !== '' || 
     selectedFilters.maxPrice < 10000
 
-  if (loading) {
+  if (loading || categoriesLoading) {
     return (
       <div className="flex flex-col min-h-screen justify-center align-center max-w-7xl mx-auto">
         <Header />
@@ -240,6 +265,10 @@ export default function CarsPage() {
             <CarCard
               key={car.id}
               car={car}
+              carTypeNames={(car.carTypeIds || []).map((id) => carTypeMap[id]).filter(Boolean)}
+              transmissionNames={(car.transmissionIds || []).map((id) => transmissionMap[id]).filter(Boolean)}
+              fuelTypeNames={(car.fuelTypeIds || []).map((id) => fuelTypeMap[id]).filter(Boolean)}
+              tagNames={(car.tagIds || []).map((id) => tagMap[id]).filter(Boolean)}
             />
           ))}
         </div>

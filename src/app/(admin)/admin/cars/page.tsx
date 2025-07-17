@@ -129,9 +129,9 @@ export default function AdminCars() {
         );
       } else {
         // Ensure carData matches CreateCarData type
-        const requiredFields = ['brand', 'model', 'name', 'year', 'transmission', 'fuel', 'mileage', 'dailyPrice', 'images'];
+        const requiredFields = ['brand', 'model', 'name', 'year', 'mileage', 'dailyPrice', 'images', 'carTypeIds', 'transmissionIds', 'fuelTypeIds'];
         for (const field of requiredFields) {
-          if (!(field in carData)) {
+          if (!((carData as any)[field]) || (Array.isArray((carData as any)[field]) && (carData as any)[field].length === 0)) {
             throw new Error(`Missing required field: ${field}`);
           }
         }
@@ -252,31 +252,19 @@ export default function AdminCars() {
                         )}
                       </TableCell>
                       <TableCell>
-                        {car.categoryId && typeof car.categoryId === 'object' ? (
-                          <div className="flex items-center gap-2">
-                            {(car.categoryId as { logo: string; name: string }).logo && (
-                              <Image
-                                src={(car.categoryId as { logo: string; name: string }).logo}
-                                alt={(car.categoryId as { logo: string; name: string }).name}
-                                width={24}
-                                height={24}
-                                className="rounded-full"
-                              />
-                            )}
-                            <span>{(car.categoryId as { logo: string; name: string }).name}</span>
-                          </div>
-                        ) : (
-                          car.category
-                        )}
+                        {/* Show first car type name if available, else fallback */}
+                        {Array.isArray(car.carTypeIds) && car.carTypeIds.length > 0
+                          ? car.carTypeIds[0]
+                          : 'N/A'}
                       </TableCell>
                       <TableCell>AED {car.dailyPrice.toLocaleString()}/day</TableCell>
                       <TableCell>
                         <span className={`px-2 py-1 rounded-full text-sm ${
-                          car.isAvailable 
+                          car.available
                             ? 'bg-green-500/20 text-green-600 dark:text-green-400' 
                             : 'bg-red-500/20 text-red-600 dark:text-red-400'
                         }`}>
-                          {car.isAvailable ? 'Available' : 'Unavailable'}
+                          {car.available ? 'Available' : 'Unavailable'}
                         </span>
                       </TableCell>
                       <TableCell>

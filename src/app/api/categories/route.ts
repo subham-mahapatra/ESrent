@@ -66,10 +66,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate type enum
-    const validTypes = ['carType', 'fuelType', 'tag'];
+    const validTypes = ['carType', 'fuelType', 'transmission', 'tag'];
     if (!validTypes.includes(body.type)) {
       return NextResponse.json(
-        { error: 'Invalid type. Must be one of: carType, fuelType, tag' },
+        { error: 'Invalid type. Must be one of: carType, fuelType, transmission, tag' },
         { status: 400 }
       );
     }

@@ -6,27 +6,20 @@ export interface ICar {
   model: string;
   name: string;
   year: number;
-  transmission: string;
-  fuel: string;
   mileage: number;
   dailyPrice: number;
   images: string[];
   description?: string;
   features?: string[];
-  category?: string;
-  categoryId?: string;
-  isAvailable?: boolean;
-  isFeatured?: boolean;
-  engine?: string;
-  power?: string;
-  tags?: string[];
-  seater?: number;
-  // Legacy fields for backward compatibility
-  fuelType?: string;
-  type?: string;
   available?: boolean;
   featured?: boolean;
-  // MongoDB specific fields
+  engine?: string;
+  power?: string;
+  seater?: number;
+  carTypeIds?: string[];
+  transmissionIds?: string[];
+  fuelTypeIds?: string[];
+  tagIds?: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -58,16 +51,6 @@ const carSchema = new Schema<ICar>({
     min: 1900,
     max: new Date().getFullYear() + 1
   },
-  transmission: {
-    type: String,
-    required: true,
-    enum: ['Automatic', 'Manual', 'CVT', 'Semi-Automatic']
-  },
-  fuel: {
-    type: String,
-    required: true,
-    enum: ['Petrol', 'Diesel', 'Electric', 'Hybrid', 'Plug-in Hybrid']
-  },
   mileage: {
     type: Number,
     required: true,
@@ -90,20 +73,11 @@ const carSchema = new Schema<ICar>({
     type: String,
     trim: true
   }],
-  category: {
-    type: String,
-    trim: true
-  },
-  categoryId: {
-    type: Schema.Types.ObjectId,
-    ref: 'Category',
-    required: false
-  },
-  isAvailable: {
+  available: {
     type: Boolean,
     default: true
   },
-  isFeatured: {
+  featured: {
     type: Boolean,
     default: false
   },
@@ -115,20 +89,30 @@ const carSchema = new Schema<ICar>({
     type: String,
     trim: true
   },
-  tags: [{
-    type: String,
-    trim: true
-  }],
   seater: {
     type: Number,
     min: 1
   },
-  
-  // Legacy fields
-  fuelType: String,
-  type: String,
-  available: Boolean,
-  featured: Boolean
+  carTypeIds: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Category',
+    required: false
+  }],
+  transmissionIds: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Category',
+    required: false
+  }],
+  fuelTypeIds: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Category',
+    required: false
+  }],
+  tagIds: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Category',
+    required: false
+  }]
 }, {
   timestamps: true,
   toJSON: {

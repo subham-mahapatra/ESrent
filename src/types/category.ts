@@ -2,7 +2,7 @@ export interface Category {
   id?: string;
   name: string;
   slug: string;
-  type: 'carType' | 'fuelType' | 'tag';
+  type: 'carType' | 'fuelType' | 'transmission' | 'tag';
   image?: string;
   description?: string;
   carCount?: number;

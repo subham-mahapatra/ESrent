@@ -215,6 +215,7 @@ export function CategoryDialog({ open, onOpenChange, category, onSave }: Categor
               <SelectContent>
                 <SelectItem value="carType">Car Type</SelectItem>
                 <SelectItem value="fuelType">Fuel Type</SelectItem>
+                <SelectItem value="transmission">Transmission</SelectItem>
                 <SelectItem value="tag">Tag</SelectItem>
               </SelectContent>
             </Select>

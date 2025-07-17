@@ -3,7 +3,7 @@ import { Schema, model, models, Document } from 'mongoose';
 export interface ICategory extends Document {
   name: string;
   slug: string;
-  type: 'carType' | 'fuelType' | 'tag';
+  type: 'carType' | 'fuelType' | 'transmission' | 'tag';
   image?: string;
   description?: string;
   carCount?: number;
@@ -31,7 +31,7 @@ const categorySchema = new Schema<ICategory>({
   type: {
     type: String,
     required: true,
-    enum: ['carType', 'fuelType', 'tag']
+    enum: ['carType', 'fuelType', 'transmission', 'tag']
   },
   image: {
     type: String

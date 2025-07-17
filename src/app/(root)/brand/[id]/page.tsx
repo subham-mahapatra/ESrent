@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CarCard } from "@/components/car/CarCard"
 import { ErrorState } from "@/components/ui/empty-state"
-import { useBrand, useCars } from "@/hooks/useApi"
+import { useBrand, useCars, useCategories } from "@/hooks/useApi"
 import { ArrowLeft, CarIcon, MapPin, Calendar } from "lucide-react"
 import Image from 'next/image';
 import { Car } from "@/types/car";
@@ -26,8 +26,16 @@ export default function BrandPage() {
 
   const { data: brandData, loading: brandLoading, error: brandError } = useBrand(id)
   const brand = brandData
-  const { data: carsData, loading: carsLoading, error: carsError } = useCars(id ? { brand: id } : undefined)
+  const { data: carsData, loading: carsLoading, error: carsError } = useCars(id ? { brandId: id } : undefined)
   const cars = carsData?.data || []
+  const { data: categoriesData, loading: categoriesLoading } = useCategories();
+  const categories = categoriesData?.data || [];
+
+  // Build lookup maps
+  const carTypeMap = categories.filter((c: any) => c.type === 'carType').reduce((acc: any, c: any) => { if (c.id) acc[c.id] = c.name; return acc; }, {});
+  const transmissionMap = categories.filter((c: any) => c.type === 'transmission').reduce((acc: any, c: any) => { if (c.id) acc[c.id] = c.name; return acc; }, {});
+  const fuelTypeMap = categories.filter((c: any) => c.type === 'fuelType').reduce((acc: any, c: any) => { if (c.id) acc[c.id] = c.name; return acc; }, {});
+  const tagMap = categories.filter((c: any) => c.type === 'tag').reduce((acc: any, c: any) => { if (c.id) acc[c.id] = c.name; return acc; }, {});
 
   if (!isClient) {
     return <BrandPageSkeleton />
@@ -46,7 +54,7 @@ export default function BrandPage() {
     )
   }
 
-  if (brandLoading || carsLoading) {
+  if (brandLoading || carsLoading || categoriesLoading) {
     return <BrandPageSkeleton />
   }
 
@@ -171,19 +179,26 @@ export default function BrandPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {cars.map((car) => (
-                <div key={typeof car.id === "string" || typeof car.id === "number" ? car.id : undefined} className="group">
-                  <CarCard
-                    car={car as unknown as Car}
-                    onClick={() => {
-                      if (isClient && typeof window !== "undefined") {
-                        localStorage.setItem("previousPage", "brand")
-                      }
-                    }}
-                    className="h-full transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 bg-gray-800/50 border-gray-700 backdrop-blur-sm"
-                  />
-                </div>
-              ))}
+              {cars.map((car) => {
+                const safeCar = car as unknown as Car;
+                return (
+                  <div key={typeof safeCar.id === "string" || typeof safeCar.id === "number" ? safeCar.id : undefined} className="group">
+                    <CarCard
+                      car={safeCar}
+                      onClick={() => {
+                        if (isClient && typeof window !== "undefined") {
+                          localStorage.setItem("previousPage", "brand")
+                        }
+                      }}
+                      className="h-full transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 bg-gray-800/50 border-gray-700 backdrop-blur-sm"
+                      carTypeNames={Array.isArray(safeCar.carTypeIds) ? safeCar.carTypeIds.map((id: string) => carTypeMap[id]).filter(Boolean) : []}
+                      transmissionNames={Array.isArray(safeCar.transmissionIds) ? safeCar.transmissionIds.map((id: string) => transmissionMap[id]).filter(Boolean) : []}
+                      fuelTypeNames={Array.isArray(safeCar.fuelTypeIds) ? safeCar.fuelTypeIds.map((id: string) => fuelTypeMap[id]).filter(Boolean) : []}
+                      tagNames={Array.isArray(safeCar.tagIds) ? safeCar.tagIds.map((id: string) => tagMap[id]).filter(Boolean) : []}
+                    />
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

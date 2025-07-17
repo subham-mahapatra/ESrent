@@ -143,6 +143,7 @@ export function useApi<T>(
 export function useCars(params?: {
   search?: string;
   brand?: string;
+  brandId?: string;
   category?: string;
   categoryId?: string;
   minPrice?: number;

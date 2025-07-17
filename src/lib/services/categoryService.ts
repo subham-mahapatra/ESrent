@@ -308,7 +308,6 @@ export class CategoryService {
   static async getAllCategoriesWithCarCounts(): Promise<Category[]> {
     try {
       await dbConnect();
-      
       // Get all categories
       const categories = await CategoryModel.find()
         .sort({ type: 1, name: 1 })
@@ -318,35 +317,34 @@ export class CategoryService {
       const categoriesWithCounts = await Promise.all(
         categories.map(async (category) => {
           let carCount = 0;
-          
-          // Count cars based on category type
           switch (category.type) {
             case 'carType':
-              // Count cars where categoryId matches or category name matches
               carCount = await CarModel.countDocuments({
-                $or: [
-                  { categoryId: category._id },
-                  { category: { $regex: category.name, $options: 'i' } }
-                ],
-                isAvailable: true 
+                carTypeIds: category._id,
+                available: true
               });
               break;
             case 'fuelType':
-              // Count cars where fuel type matches the category name
-              carCount = await CarModel.countDocuments({ 
-                fuel: { $regex: category.name, $options: 'i' },
-                isAvailable: true 
+              carCount = await CarModel.countDocuments({
+                fuelTypeIds: category._id,
+                available: true
+              });
+              break;
+            case 'transmission':
+              carCount = await CarModel.countDocuments({
+                transmissionIds: category._id,
+                available: true
               });
               break;
             case 'tag':
-              // Count cars where tags include the category name
-              carCount = await CarModel.countDocuments({ 
-                tags: { $regex: category.name, $options: 'i' },
-                isAvailable: true 
+              carCount = await CarModel.countDocuments({
+                tagIds: category._id,
+                available: true
               });
               break;
+            default:
+              carCount = 0;
           }
-
           const { _id, __v, ...rest } = category as any;
           return {
             ...rest,
@@ -357,7 +355,6 @@ export class CategoryService {
           } as Category;
         })
       );
-
       return categoriesWithCounts;
     } catch (error) {
       console.error('Error getting categories with car counts:', error);

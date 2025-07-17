@@ -14,14 +14,16 @@ export async function GET(request: NextRequest) {
     // Filter parameters
     const brand = searchParams.get('brand');
     if (brand !== null) filters.brand = brand;
-    const category = searchParams.get('category');
-    if (category !== null) filters.category = category;
-    const categoryId = searchParams.get('categoryId');
-    if (categoryId !== null) filters.categoryId = categoryId;
-    const transmission = searchParams.get('transmission');
-    if (transmission !== null) filters.transmission = transmission;
-    const fuel = searchParams.get('fuel');
-    if (fuel !== null) filters.fuel = fuel;
+    const carTypeId = searchParams.get('carTypeId');
+    if (carTypeId !== null) filters.carTypeId = carTypeId;
+    const transmissionId = searchParams.get('transmissionId');
+    if (transmissionId !== null) filters.transmissionId = transmissionId;
+    const fuelTypeId = searchParams.get('fuelTypeId');
+    if (fuelTypeId !== null) filters.fuelTypeId = fuelTypeId;
+    const available = searchParams.get('available');
+    if (available !== null) filters.available = available === 'true';
+    const featured = searchParams.get('featured');
+    if (featured !== null) filters.featured = featured === 'true';
     const search = searchParams.get('search');
     if (search !== null) filters.search = search;
     const brandId = searchParams.get('brandId');
@@ -66,9 +68,9 @@ export async function POST(request: NextRequest) {
     console.log('POST /api/cars body:', body);
     
     // Validate required fields
-    const requiredFields = ['brand', 'brandId', 'model', 'name', 'year', 'transmission', 'fuel', 'mileage', 'dailyPrice', 'images'];
+    const requiredFields = ['brand', 'brandId', 'model', 'name', 'year', 'mileage', 'dailyPrice', 'images', 'carTypeIds', 'transmissionIds', 'fuelTypeIds'];
     for (const field of requiredFields) {
-      if (!body[field]) {
+      if (!body[field] || (Array.isArray(body[field]) && body[field].length === 0)) {
         console.warn(`Missing required field: ${field}`);
         return NextResponse.json(
           { error: `Missing required field: ${field}` },

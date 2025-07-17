@@ -329,14 +329,14 @@ export default function CategoriesPage() {
                 <CardContent className="p-0">
                   <div className="aspect-[16/9] relative">
                     <Image
-                      src={getCategoryImage(category.type, category.slug)}
+                      src={category.image || '/images/luxury-car-bg.jpg'}
                       alt={category.name}
                       fill
                       className="object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-4">
                       <h3 className="text-xl font-semibold text-white">{category.name}</h3>
-                      <p className="text-white/80 mt-1">{category.realCarCount} cars</p>
+                      <p className="text-white/80 mt-1">{typeof category.realCarCount === 'number' ? category.realCarCount : 0} cars</p>
                     </div>
                   </div>
                   <div className="p-4">
@@ -379,41 +379,4 @@ function getCategoryTypeLabel(type: string): string {
     default:
       return type;
   }
-}
-
-function getCategoryImage(type: string, slug: string): string {
-  // Using placeholder images from Unsplash for each category type
-  // In a real application, these would be stored in the database or a CDN
-  
-  // Base image URLs for each category type
-  const typeImages: Record<string, string> = {
-    'carType': 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?q=80&w=1000',
-    'fuelType': 'https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?q=80&w=1000',
-    'tag': 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=1000'
-  };
-  
-  // Specific images for popular categories (based on slug)
-  const specificImages: Record<string, string> = {
-    // Car Types
-    'suv': 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?q=80&w=1000',
-    'sedan': 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?q=80&w=1000',
-    'coupe': 'https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?q=80&w=1000',
-    'convertible': 'https://images.unsplash.com/photo-1583121274602-3e2820c69888?q=80&w=1000',
-    'hatchback': 'https://images.unsplash.com/photo-1471444928139-48c5bf5173f8?q=80&w=1000',
-    
-    // Fuel Types
-    'petrol': 'https://images.unsplash.com/photo-1603768551289-7d6c4e3ca11c?q=80&w=1000',
-    'diesel': 'https://images.unsplash.com/photo-1544461772-722f2a73a8a2?q=80&w=1000',
-    'electric': 'https://images.unsplash.com/photo-1593941707882-a5bba53b0998?q=80&w=1000',
-    'hybrid': 'https://images.unsplash.com/photo-1620714223084-8fcacc6dfd8d?q=80&w=1000',
-    
-    // Features
-    'luxury': 'https://images.unsplash.com/photo-1511919884226-fd3cad34687c?q=80&w=1000',
-    'sports': 'https://images.unsplash.com/photo-1542362567-b07e54358753?q=80&w=1000',
-    'family': 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?q=80&w=1000',
-    'economy': 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=1000',
-  };
-  
-  // Return specific image if available, otherwise return type-based image
-  return specificImages[slug.toLowerCase()] || typeImages[type] || 'https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?q=80&w=1000';
 }

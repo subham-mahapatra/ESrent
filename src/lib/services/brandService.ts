@@ -204,7 +204,7 @@ export class BrandService {
   static async updateBrandCarCount(brandId: string): Promise<void> {
     try {
       await dbConnect();
-      const carCount = await CarModel.countDocuments({ brand: brandId });
+      const carCount = await CarModel.countDocuments({ brandId });
       await BrandModel.findByIdAndUpdate(brandId, { carCount });
     } catch (error) {
       console.error('Error updating brand car count:', error);
@@ -221,7 +221,7 @@ export class BrandService {
       const brands = await BrandModel.find().lean();
       
       for (const brand of brands) {
-        const carCount = await CarModel.countDocuments({ brand: brand.name });
+        const carCount = await CarModel.countDocuments({ brandId: brand._id });
         await BrandModel.findByIdAndUpdate(brand._id, { carCount });
       }
     } catch (error) {

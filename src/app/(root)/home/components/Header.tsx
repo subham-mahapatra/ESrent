@@ -38,7 +38,7 @@ export function Header() {
           </div>
 
           {/* Centered NavBar */}
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:block">
             <NavBar items={navItems} className="static mb-0 text-foreground" />
           </div>
 

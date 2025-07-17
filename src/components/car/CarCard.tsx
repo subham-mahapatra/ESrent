@@ -13,9 +13,13 @@ interface CarCardProps {
   onClick?: () => void;
   className?: string;
   linkHref?: string;
+  carTypeNames?: string[];
+  transmissionNames?: string[];
+  fuelTypeNames?: string[];
+  tagNames?: string[];
 }
 
-export function CarCard({ car, onClick, linkHref }: CarCardProps) {
+export function CarCard({ car, onClick, linkHref, carTypeNames = [], transmissionNames = [], fuelTypeNames = [], tagNames = [] }: CarCardProps) {
   const href = linkHref || `/car/${car.id}`;
 
   // Safely get the first image or use a fallback
@@ -25,9 +29,10 @@ export function CarCard({ car, onClick, linkHref }: CarCardProps) {
   const carName = car.name || `${car.brand || 'Unknown'} ${car.model || 'Model'}`;
   
   // Safely get car details with fallbacks
-  const carYear = car.year || 'N/A';
-  const carTransmission = car.transmission || 'N/A';
-  const carFuel = car.fuel || 'N/A';
+  const carYear = car.year || '';
+  const carType = carTypeNames[0] || '';
+  const carTransmission = transmissionNames[0] || '';
+  const carFuel = fuelTypeNames[0] || '';
   const carMileage = car.mileage || 0;
   const carPrice = car.dailyPrice || 0;
 
@@ -58,14 +63,23 @@ export function CarCard({ car, onClick, linkHref }: CarCardProps) {
           <div className="absolute bottom-0 w-full p-5 space-y-3">
             <h3 className="text-heading-3 text-white">{carName}</h3>
             <div className="flex items-center gap-2 text-sm text-white/70">
-              <span>{carYear}</span>
-              <span>•</span>
-              <span>{carTransmission}</span>
-              <span>•</span>
-              <span>{carFuel}</span>
+              {carYear && <span>{carYear}</span>}
+              {carType && carYear && <span>•</span>}
+              {carType && <span>{carType}</span>}
+              {carTransmission && (carType || carYear) && <span>•</span>}
+              {carTransmission && <span>{carTransmission}</span>}
+              {carFuel && (carTransmission || carType || carYear) && <span>•</span>}
+              {carFuel && <span>{carFuel}</span>}
               <span>•</span>
               <span>{carMileage}kms/day</span>
             </div>
+            {tagNames.length > 0 && (
+              <div className="flex flex-wrap gap-1 text-xs text-primary pt-1">
+                {tagNames.map((tag, idx) => (
+                  <span key={tag + idx} className="bg-primary/10 px-2 py-0.5 rounded-full">{tag}</span>
+                ))}
+              </div>
+            )}
             <div className="flex items-center justify-between pt-2">
               <div className="flex items-baseline gap-1">
                 <span className="text-primary text-heading-3">AED {carPrice.toLocaleString()}</span>

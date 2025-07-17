@@ -16,20 +16,18 @@ export interface Car {
   features?: string[];
   category?: string;
   categoryId?: string;
-  isAvailable?: boolean;
-  isFeatured?: boolean;
+  available?: boolean;
+  featured?: boolean;
   engine?: string;
   power?: string;
   tags?: string[];
   seater?: number;
-  
-  // Legacy fields for backward compatibility
-  fuelType?: string; // Some cars might use this instead of 'fuel'
-  type?: string; // Some cars might use this instead of 'category'
-  available?: boolean; // Some cars might use this instead of 'isAvailable'
-  featured?: boolean; // Some cars might use this instead of 'isFeatured'
-  
-  // MongoDB specific fields
+  carTypeIds?: string[];
+  transmissionIds?: string[];
+  fuelTypeIds?: string[];
+  tagIds?: string[];
+  fuelType?: string;
+  type?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -42,6 +40,10 @@ export interface CreateCarData extends Omit<Car, 'id' | 'createdAt' | 'updatedAt
   power?: string;
   tags?: string[];
   seater?: number;
+  carTypeIds?: string[];
+  transmissionIds?: string[];
+  fuelTypeIds?: string[];
+  tagIds?: string[];
 }
 
 // Type for updating a car
@@ -51,4 +53,8 @@ export interface UpdateCarData extends Partial<Omit<Car, 'id' | 'createdAt' | 'u
   power?: string;
   tags?: string[];
   seater?: number;
+  carTypeIds?: string[];
+  transmissionIds?: string[];
+  fuelTypeIds?: string[];
+  tagIds?: string[];
 }

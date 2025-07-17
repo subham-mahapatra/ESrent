@@ -1,7 +1,8 @@
 'use client'
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Car } from '@/types/car';
+import { Category } from '@/types/category';
 import { Button } from "@/components/ui/button";
 import { FilterModal, FilterValues } from './FilterModal';
 import { CarCard } from '@/components/car/CarCard';
@@ -10,9 +11,10 @@ import { EmptyCars } from '@/components/ui/empty-state';
 
 interface FeaturedVehiclesProps {
   cars: Car[];
+  categories: Category[];
 }
 
-export function FeaturedVehicles({ cars }: FeaturedVehiclesProps) {
+export function FeaturedVehicles({ cars, categories }: FeaturedVehiclesProps) {
   const [isClient, setIsClient] = useState(false);
   
   // Ensure we're on the client side
@@ -42,21 +44,40 @@ export function FeaturedVehicles({ cars }: FeaturedVehiclesProps) {
   const [selectedFilters, setSelectedFilters] = useState(initialFilters);
   const [shouldResetFilters, setShouldResetFilters] = useState(false);
 
+  // Build lookup maps
+  const carTypeMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    categories.filter((c: any) => c.type === 'carType').forEach((c: any) => { if (c.id) map[c.id] = c.name; });
+    return map;
+  }, [categories]);
+  const transmissionMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    categories.filter((c: any) => c.type === 'transmission').forEach((c: any) => { if (c.id) map[c.id] = c.name; });
+    return map;
+  }, [categories]);
+  const fuelTypeMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    categories.filter((c: any) => c.type === 'fuelType').forEach((c: any) => { if (c.id) map[c.id] = c.name; });
+    return map;
+  }, [categories]);
+  const tagMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    categories.filter((c: any) => c.type === 'tag').forEach((c: any) => { if (c.id) map[c.id] = c.name; });
+    return map;
+  }, [categories]);
+
   const handleFiltersChange = (filters: FilterValues) => {
     setShouldResetFilters(false);
     setSelectedFilters(filters);
     const filtered = validCars.filter(car => {
       const matchesPrice = car.dailyPrice >= 1000 && car.dailyPrice <= filters.maxPrice;
-      const matchesTransmission = !filters.transmission || 
-                                 car.transmission?.toLowerCase() === filters.transmission.toLowerCase();
-      const matchesType = filters.types.length === 0 || 
-                         filters.types.includes((car.category || '').toLowerCase());
-      const matchesTags = filters.tags.length === 0 ||
-                         (car.features || []).some((tag: string) => filters.tags.includes(tag.toLowerCase()));
-
-      return matchesPrice && matchesTransmission && matchesType && matchesTags;
+      const matchesTransmission = !filters.transmission ||
+        (Array.isArray(car.transmissionIds) && car.transmissionIds[0] && car.transmissionIds[0] === filters.transmission);
+      const matchesType = filters.types.length === 0 ||
+        (Array.isArray(car.carTypeIds) && car.carTypeIds[0] && filters.types.includes(car.carTypeIds[0]));
+      // You may want to map IDs to names for a better UX
+      return matchesPrice && matchesTransmission && matchesType;
     });
-
     setFilteredCars(filtered);
   };
 
@@ -156,9 +177,13 @@ export function FeaturedVehicles({ cars }: FeaturedVehiclesProps) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredCars.slice(0, 6).map((car) => (
-          <CarCard 
-            key={car.id} 
-            car={car} 
+          <CarCard
+            key={car.id}
+            car={car}
+            carTypeNames={(car.carTypeIds || []).map((id) => carTypeMap[id]).filter(Boolean)}
+            transmissionNames={(car.transmissionIds || []).map((id) => transmissionMap[id]).filter(Boolean)}
+            fuelTypeNames={(car.fuelTypeIds || []).map((id) => fuelTypeMap[id]).filter(Boolean)}
+            tagNames={(car.tagIds || []).map((id) => tagMap[id]).filter(Boolean)}
             onClick={() => {
               if (isClient && typeof window !== 'undefined') {
                 localStorage.setItem('previousPage', 'home');

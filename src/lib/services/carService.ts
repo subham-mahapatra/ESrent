@@ -6,14 +6,13 @@ import { Model } from 'mongoose';
 
 export interface CarFilters {
   brand?: string;
-  category?: string;
-  categoryId?: string;
-  transmission?: string;
-  fuel?: string;
+  carTypeId?: string;
+  transmissionId?: string;
+  fuelTypeId?: string;
   minPrice?: number;
   maxPrice?: number;
-  isAvailable?: boolean;
-  isFeatured?: boolean;
+  available?: boolean;
+  featured?: boolean;
   search?: string;
   brandId?: string;
 }
@@ -84,16 +83,16 @@ export class CarService {
         query.brand = { $regex: filters.brand, $options: 'i' };
       }
 
-      if (filters.category) {
-        query.category = { $regex: filters.category, $options: 'i' };
+      if (filters.carTypeId) {
+        query.carTypeIds = filters.carTypeId;
       }
 
-      if (filters.transmission) {
-        query.transmission = filters.transmission;
+      if (filters.transmissionId) {
+        query.transmissionIds = filters.transmissionId;
       }
 
-      if (filters.fuel) {
-        query.fuel = filters.fuel;
+      if (filters.fuelTypeId) {
+        query.fuelTypeIds = filters.fuelTypeId;
       }
 
       if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
@@ -106,12 +105,12 @@ export class CarService {
         }
       }
 
-      if (filters.isAvailable !== undefined) {
-        query.isAvailable = filters.isAvailable;
+      if (filters.available !== undefined) {
+        query.available = filters.available;
       }
 
-      if (filters.isFeatured !== undefined) {
-        query.isFeatured = filters.isFeatured;
+      if (filters.featured !== undefined) {
+        query.featured = filters.featured;
       }
 
       if (filters.search) {
@@ -122,10 +121,6 @@ export class CarService {
         query.brandId = filters.brandId;
       }
 
-      if (filters.categoryId) {
-        query.categoryId = filters.categoryId;
-      }
-
       // Build sort object
       const sort: { [key: string]: 1 | -1 } = {};
       sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
@@ -134,7 +129,6 @@ export class CarService {
       const [cars, total] = await Promise.all([
         CarModel.find(query)
           .populate('brandId')
-          .populate('categoryId')
           .sort(sort)
           .skip(skip)
           .limit(limit)
@@ -204,7 +198,7 @@ export class CarService {
   static async getFeaturedCars(limit: number = 6): Promise<Car[]> {
     try {
       await dbConnect();
-      const cars = await CarModel.find({ isFeatured: true, isAvailable: true })
+      const cars = await CarModel.find({ featured: true, available: true })
         .sort({ createdAt: -1 })
         .limit(limit)
         .lean();
@@ -213,7 +207,9 @@ export class CarService {
         ...car,
         id: car._id?.toString(),
         _id: undefined,
-        __v: undefined
+        __v: undefined,
+        transmission: Array.isArray(car.transmissionIds) && car.transmissionIds.length > 0 ? String(car.transmissionIds[0]) : '',
+        fuel: Array.isArray(car.fuelTypeIds) && car.fuelTypeIds.length > 0 ? String(car.fuelTypeIds[0]) : '',
       }));
     } catch (error) {
       console.error('Error getting featured cars:', error);
@@ -229,7 +225,7 @@ export class CarService {
       await dbConnect();
       const cars = await CarModel.find({ 
         brand: { $regex: brand, $options: 'i' },
-        isAvailable: true 
+        available: true 
       })
         .sort({ createdAt: -1 })
         .limit(limit)
@@ -239,37 +235,13 @@ export class CarService {
         ...car,
         id: car._id?.toString(),
         _id: undefined,
-        __v: undefined
+        __v: undefined,
+        transmission: Array.isArray(car.transmissionIds) && car.transmissionIds.length > 0 ? String(car.transmissionIds[0]) : '',
+        fuel: Array.isArray(car.fuelTypeIds) && car.fuelTypeIds.length > 0 ? String(car.fuelTypeIds[0]) : '',
       }));
     } catch (error) {
       console.error('Error getting cars by brand:', error);
       throw new Error('Failed to get cars by brand');
-    }
-  }
-
-  /**
-   * Get cars by category
-   */
-  static async getCarsByCategory(category: string, limit: number = 12): Promise<Car[]> {
-    try {
-      await dbConnect();
-      const cars = await CarModel.find({ 
-        category: { $regex: category, $options: 'i' },
-        isAvailable: true 
-      })
-        .sort({ createdAt: -1 })
-        .limit(limit)
-        .lean();
-
-      return cars.map(car => ({
-        ...car,
-        id: car._id?.toString(),
-        _id: undefined,
-        __v: undefined
-      }));
-    } catch (error) {
-      console.error('Error getting cars by category:', error);
-      throw new Error('Failed to get cars by category');
     }
   }
 
@@ -281,7 +253,7 @@ export class CarService {
       await dbConnect();
       const cars = await CarModel.find({
         $text: { $search: query },
-        isAvailable: true
+        available: true
       })
         .sort({ score: { $meta: 'textScore' } })
         .limit(limit)
@@ -291,7 +263,9 @@ export class CarService {
         ...car,
         id: car._id?.toString(),
         _id: undefined,
-        __v: undefined
+        __v: undefined,
+        transmission: Array.isArray(car.transmissionIds) && car.transmissionIds.length > 0 ? String(car.transmissionIds[0]) : '',
+        fuel: Array.isArray(car.fuelTypeIds) && car.fuelTypeIds.length > 0 ? String(car.fuelTypeIds[0]) : '',
       }));
     } catch (error) {
       console.error('Error searching cars:', error);
@@ -312,12 +286,11 @@ export class CarService {
     try {
       await dbConnect();
       
-      const [total, available, featured, brands, categories] = await Promise.all([
+      const [total, available, featured, brands] = await Promise.all([
         CarModel.countDocuments(),
-        CarModel.countDocuments({ isAvailable: true }),
-        CarModel.countDocuments({ isFeatured: true }),
+        CarModel.countDocuments({ available: true }),
+        CarModel.countDocuments({ featured: true }),
         CarModel.distinct('brand'),
-        CarModel.distinct('category')
       ]);
 
       return {
@@ -325,7 +298,7 @@ export class CarService {
         available,
         featured,
         brands: brands.filter(Boolean),
-        categories: categories.filter(Boolean)
+        categories: [], // categories are now in carTypeIds, not a flat field
       };
     } catch (error) {
       console.error('Error getting car stats:', error);
