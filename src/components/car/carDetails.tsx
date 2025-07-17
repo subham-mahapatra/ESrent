@@ -24,6 +24,23 @@ import {
 } from "lucide-react"
 import Image from 'next/image';
 
+interface Car {
+  images: string[];
+  name: string;
+  dailyPrice: number;
+  year: number;
+  transmission?: string;
+  seater?: number;
+  engine?: string;
+  mileage?: string;
+  fuel?: string;
+  category?: string;
+  tags?: string[];
+  description?: string;
+  brand?: string;
+  model?: string;
+}
+
 export default function CarDetails() {
   const params = useParams()
   const router = useRouter()
@@ -40,7 +57,7 @@ export default function CarDetails() {
     setIsClient(true)
   }, [])
 
-  const { data: car, loading, error } = useCar(carId)
+  const { data: car, loading, error } = useCar(carId) as { data: Car | null, loading: boolean, error: any };
 
   const handleBackClick = () => {
     if (!isClient) return
