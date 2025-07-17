@@ -1,7 +1,8 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 
-export interface ICar extends Document {
+export interface ICar {
   brand: string;
+  brandId?: string;
   model: string;
   name: string;
   year: number;
@@ -13,15 +14,18 @@ export interface ICar extends Document {
   description?: string;
   features?: string[];
   category?: string;
+  categoryId?: string;
   isAvailable?: boolean;
   isFeatured?: boolean;
-  
+  engine?: string;
+  power?: string;
+  tags?: string[];
+  seater?: number;
   // Legacy fields for backward compatibility
   fuelType?: string;
   type?: string;
   available?: boolean;
   featured?: boolean;
-  
   // MongoDB specific fields
   createdAt: Date;
   updatedAt: Date;
@@ -32,6 +36,11 @@ const carSchema = new Schema<ICar>({
     type: String,
     required: true,
     trim: true
+  },
+  brandId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Brand',
+    required: false
   },
   model: {
     type: String,
@@ -85,6 +94,11 @@ const carSchema = new Schema<ICar>({
     type: String,
     trim: true
   },
+  categoryId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Category',
+    required: false
+  },
   isAvailable: {
     type: Boolean,
     default: true
@@ -92,6 +106,22 @@ const carSchema = new Schema<ICar>({
   isFeatured: {
     type: Boolean,
     default: false
+  },
+  engine: {
+    type: String,
+    trim: true
+  },
+  power: {
+    type: String,
+    trim: true
+  },
+  tags: [{
+    type: String,
+    trim: true
+  }],
+  seater: {
+    type: Number,
+    min: 1
   },
   
   // Legacy fields
@@ -102,10 +132,10 @@ const carSchema = new Schema<ICar>({
 }, {
   timestamps: true,
   toJSON: {
-    transform: function(doc, ret) {
-      ret.id = ret._id;
-      delete (ret as any)._id;
-      delete (ret as any).__v;
+    transform: function(doc, ret: any) {
+      ret.id = ret._id ? ret._id.toString() : undefined;
+      delete ret._id;
+      delete ret.__v;
       return ret;
     }
   }

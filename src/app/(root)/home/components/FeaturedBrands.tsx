@@ -22,7 +22,7 @@ export function FeaturedBrands({ brands }: FeaturedBrandsProps) {
     brand.slug
   );
   
-  const loopBrands = [...validBrands, ...validBrands];
+  const loopBrands = [...validBrands];
 
   // Don't render if no valid brands
   if (validBrands.length === 0) {
@@ -70,7 +70,7 @@ export function FeaturedBrands({ brands }: FeaturedBrandsProps) {
             {loopBrands.map((brand, index) => (
               <SwiperSlide key={`${brand.id}-${index}`} className="!w-auto">
                 <Link
-                  href={`/brand/${encodeURIComponent(brand.slug)}`}
+                  href={`/brand/${encodeURIComponent(brand.id)}`}
                   className="relative w-40 h-32 aspect-[5/4] shrink-0 bg-black rounded-2xl flex flex-col items-center justify-center transition-colors duration-300 shadow-sm border border-border overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 hover:border-primary"
                   style={{ minWidth: 128, minHeight: 96 }}
                 >

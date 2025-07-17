@@ -3,6 +3,7 @@ import { ICar } from '@/lib/models/carSchema';
 export interface Car {
   id: string;
   brand: string;
+  brandId?: string;
   model: string;
   name: string;
   year: number;
@@ -14,8 +15,13 @@ export interface Car {
   description?: string;
   features?: string[];
   category?: string;
+  categoryId?: string;
   isAvailable?: boolean;
   isFeatured?: boolean;
+  engine?: string;
+  power?: string;
+  tags?: string[];
+  seater?: number;
   
   // Legacy fields for backward compatibility
   fuelType?: string; // Some cars might use this instead of 'fuel'
@@ -31,7 +37,18 @@ export interface Car {
 // Type for creating a new car (without id and timestamps)
 export interface CreateCarData extends Omit<Car, 'id' | 'createdAt' | 'updatedAt'> {
   id?: string;
+  brandId?: string;
+  engine?: string;
+  power?: string;
+  tags?: string[];
+  seater?: number;
 }
 
 // Type for updating a car
-export interface UpdateCarData extends Partial<Omit<Car, 'id' | 'createdAt' | 'updatedAt'>> {}
+export interface UpdateCarData extends Partial<Omit<Car, 'id' | 'createdAt' | 'updatedAt'>> {
+  brandId?: string;
+  engine?: string;
+  power?: string;
+  tags?: string[];
+  seater?: number;
+}

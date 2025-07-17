@@ -83,7 +83,7 @@ function FeaturedContent() {
   // Memoize the API parameters to prevent unnecessary re-renders
   const carsParams = useMemo(() => ({ featured: true, limit: 6 }), []);
   const brandsParams = useMemo(() => ({ featured: true, limit: 10 }), []);
-  const categoriesParams = useMemo(() => ({ limit: 10 }), []);
+  const categoriesParams = useMemo(() => ({ featured: true, limit: 10 }), []);
 
   // Use API hooks for data fetching with caching
   const { 
@@ -124,14 +124,20 @@ function FeaturedContent() {
     cars.filter(car => car && car.id && car.name), 
     [cars]
   );
-  const validBrands = useMemo(() => 
-    brands.filter(brand => brand && brand.id && brand.name && brand.logo), 
-    [brands]
-  );
+  const validBrands = useMemo(() => {
+    const seen = new Set();
+    return brands.filter(brand => {
+      if (!brand || !brand.id || !brand.name || !brand.logo) return false;
+      if (seen.has(brand.id)) return false;
+      seen.add(brand.id);
+      return true;
+    });
+  }, [brands]);
   const validCategories = useMemo(() => 
     categories.filter(category => category && category.name), 
     [categories]
   );
+  console.log("validCategories",validCategories)
 
   // Handle retry for all data
   const handleRetry = () => {

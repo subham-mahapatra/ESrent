@@ -28,7 +28,7 @@ export function Categories({ categories }: CategoriesProps) {
             {categories.map((category) => (
               <Link
                 key={category.id}
-                href={`/category/${encodeURIComponent(category.slug)}`}
+                href={`/category/${encodeURIComponent(category.id || category.slug)}`}
                 className="group relative flex-none w-[280px] aspect-square rounded-2xl overflow-hidden snap-start"
               >
                 <Image

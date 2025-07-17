@@ -4,9 +4,8 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent } from "@/components/ui/card";
-import { CategoryCardSkeleton } from '@/components/ui/card-skeleton';
 import { Category } from '@/types/category';
-import { carService } from '@/services/carService';
+import { frontendServices } from '@/lib/services/frontendServices';
 import { Header } from '../home/components/Header';
 import { Button } from '@/components/ui/button';
 import { SearchBar } from '../home/components/SearchBar';
@@ -34,35 +33,25 @@ export default function CategoriesPage() {
   useEffect(() => {
     const loadCategoriesWithCarCount = async () => {
       try {
-        // Fetch all categories
-        setCategories([]); // or mock data
-        
-        // Fetch car counts for each category
-        const categoriesWithCount = await Promise.all([
-          // Mock data for car types
-          { id: 1, name: 'SUV', slug: 'suv', type: 'carType', realCarCount: 150 },
-          { id: 2, name: 'Sedan', slug: 'sedan', type: 'carType', realCarCount: 120 },
-          { id: 3, name: 'Coupe', slug: 'coupe', type: 'carType', realCarCount: 80 },
-          { id: 4, name: 'Convertible', slug: 'convertible', type: 'carType', realCarCount: 50 },
-          { id: 5, name: 'Hatchback', slug: 'hatchback', type: 'carType', realCarCount: 100 },
-          
-          // Mock data for fuel types
-          { id: 6, name: 'Petrol', slug: 'petrol', type: 'fuelType', realCarCount: 200 },
-          { id: 7, name: 'Diesel', slug: 'diesel', type: 'fuelType', realCarCount: 100 },
-          { id: 8, name: 'Electric', slug: 'electric', type: 'fuelType', realCarCount: 80 },
-          { id: 9, name: 'Hybrid', slug: 'hybrid', type: 'fuelType', realCarCount: 60 },
-          
-          // Mock data for features
-          { id: 10, name: 'Luxury', slug: 'luxury', type: 'tag', realCarCount: 120 },
-          { id: 11, name: 'Sports', slug: 'sports', type: 'tag', realCarCount: 100 },
-          { id: 12, name: 'Family', slug: 'family', type: 'tag', realCarCount: 150 },
-          { id: 13, name: 'Economy', slug: 'economy', type: 'tag', realCarCount: 180 },
-        ]);
-        
+        setLoading(true);
+        // Fetch categories with car counts from API
+        const response = await frontendServices.getCategoriesWithCarCounts();
+        const categoriesArr: Category[] = Array.isArray((response as any)?.data)
+          ? (response as any).data
+          : Array.isArray((response as any)?.categories)
+            ? (response as any).categories
+            : [];
+        const categoriesWithCount = categoriesArr.map((category) => ({
+          ...category,
+          realCarCount: category.carCount || 0
+        }));
         setCategories(categoriesWithCount);
         setFilteredCategories(categoriesWithCount);
       } catch (error) {
         console.error('Error loading categories with car count:', error);
+        // Fallback to empty array if API fails
+        setCategories([]);
+        setFilteredCategories([]);
       } finally {
         setLoading(false);
       }
@@ -330,8 +319,8 @@ export default function CategoriesPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCategories.map((category) => (
             <Link
-              key={category.id}
-              href={`/category/${encodeURIComponent(category.slug)}`}
+              key={String(category.id)}
+              href={`/category/${encodeURIComponent(String(category.id))}`}
             >
               <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-200 h-full">
                 <CardContent className="p-0">

@@ -154,6 +154,7 @@ export function useCars(params?: {
   search?: string;
   brand?: string;
   category?: string;
+  categoryId?: string;
   minPrice?: number;
   maxPrice?: number;
   page?: number;

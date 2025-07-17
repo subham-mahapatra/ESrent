@@ -5,6 +5,7 @@ import { dbConnect } from '@/lib/mongodb';
 export interface CarFilters {
   brand?: string;
   category?: string;
+  categoryId?: string;
   transmission?: string;
   fuel?: string;
   minPrice?: number;
@@ -12,6 +13,7 @@ export interface CarFilters {
   isAvailable?: boolean;
   isFeatured?: boolean;
   search?: string;
+  brandId?: string;
 }
 
 export interface CarSearchOptions {
@@ -105,6 +107,14 @@ export class CarService {
         query.$text = { $search: filters.search };
       }
 
+      if (filters.brandId) {
+        query.brandId = filters.brandId;
+      }
+
+      if (filters.categoryId) {
+        query.categoryId = filters.categoryId;
+      }
+
       // Build sort object
       const sort: any = {};
       sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
@@ -112,6 +122,8 @@ export class CarService {
       // Execute query
       const [cars, total] = await Promise.all([
         CarModel.find(query)
+          .populate('brandId')
+          .populate('categoryId')
           .sort(sort)
           .skip(skip)
           .limit(limit)

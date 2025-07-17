@@ -109,7 +109,6 @@ export default function AdminCars() {
   const handleSaveCar = async (carData: Partial<Car>) => {
     try {
       if (!token) throw new Error('Not authenticated');
-      let savedCar: Car;
       if (selectedCar) {
         const res = await fetch(`/api/cars/${selectedCar.id}`, {
           method: 'PUT',
@@ -207,13 +206,14 @@ export default function AdminCars() {
                     <TableHead>Image</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Brand</TableHead>
+                    <TableHead>Category</TableHead>
                     <TableHead>Price</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {cars.map((car) => (
+                  {cars.map((car: Car) => (
                     <TableRow key={car.id} className="transition-colors hover:bg-muted/50">
                       <TableCell>
                         {car.images && car.images.length > 0 ? (
@@ -233,7 +233,42 @@ export default function AdminCars() {
                         )}
                       </TableCell>
                       <TableCell>{car.name}</TableCell>
-                      <TableCell>{car.brand}</TableCell>
+                      <TableCell>
+                        {car.brandId && typeof car.brandId === 'object' ? (
+                          <div className="flex items-center gap-2">
+                            {(car.brandId as { logo: string; name: string }).logo && (
+                              <Image
+                                src={(car.brandId as { logo: string; name: string }).logo}
+                                alt={(car.brandId as { logo: string; name: string }).name}
+                                width={24}
+                                height={24}
+                                className="rounded-full"
+                              />
+                            )}
+                            <span>{(car.brandId as { logo: string; name: string }).name}</span>
+                          </div>
+                        ) : (
+                          car.brand
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {car.categoryId && typeof car.categoryId === 'object' ? (
+                          <div className="flex items-center gap-2">
+                            {(car.categoryId as { logo: string; name: string }).logo && (
+                              <Image
+                                src={(car.categoryId as { logo: string; name: string }).logo}
+                                alt={(car.categoryId as { logo: string; name: string }).name}
+                                width={24}
+                                height={24}
+                                className="rounded-full"
+                              />
+                            )}
+                            <span>{(car.categoryId as { logo: string; name: string }).name}</span>
+                          </div>
+                        ) : (
+                          car.category
+                        )}
+                      </TableCell>
                       <TableCell>AED {car.dailyPrice.toLocaleString()}/day</TableCell>
                       <TableCell>
                         <span className={`px-2 py-1 rounded-full text-sm ${

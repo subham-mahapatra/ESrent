@@ -298,4 +298,66 @@ export class CategoryService {
       throw new Error('Failed to get category statistics');
     }
   }
+
+  /**
+   * Get all categories with car counts
+   */
+  static async getAllCategoriesWithCarCounts(): Promise<Category[]> {
+    try {
+      await dbConnect();
+      
+      // Get all categories
+      const categories = await CategoryModel.find()
+        .sort({ type: 1, name: 1 })
+        .lean();
+
+      // Get car counts for each category
+      const categoriesWithCounts = await Promise.all(
+        categories.map(async (category) => {
+          let carCount = 0;
+          
+          // Count cars based on category type
+          switch (category.type) {
+            case 'carType':
+              // Count cars where categoryId matches or category name matches
+              carCount = await CarModel.countDocuments({
+                $or: [
+                  { categoryId: category._id },
+                  { category: { $regex: category.name, $options: 'i' } }
+                ],
+                isAvailable: true 
+              });
+              break;
+            case 'fuelType':
+              // Count cars where fuel type matches the category name
+              carCount = await CarModel.countDocuments({ 
+                fuel: { $regex: category.name, $options: 'i' },
+                isAvailable: true 
+              });
+              break;
+            case 'tag':
+              // Count cars where tags include the category name
+              carCount = await CarModel.countDocuments({ 
+                tags: { $regex: category.name, $options: 'i' },
+                isAvailable: true 
+              });
+              break;
+          }
+
+          return {
+            ...category,
+            id: category._id.toString(),
+            _id: undefined,
+            __v: undefined,
+            carCount
+          };
+        })
+      );
+
+      return categoriesWithCounts;
+    } catch (error) {
+      console.error('Error getting categories with car counts:', error);
+      throw new Error('Failed to get categories with car counts');
+    }
+  }
 } 

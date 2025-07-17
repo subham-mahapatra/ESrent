@@ -51,8 +51,11 @@ export default function CarsPage() {
 
   // Update dropoffDate when pickupDate or duration changes
   useEffect(() => {
+    if (!pickupDate) return; // Guard: only run if pickupDate is set
     const durationObj = durations.find(d => d.value === selectedDuration) || durations[0];
-    const newDropoff = format(addDays(new Date(pickupDate), durationObj.days), 'yyyy-MM-dd');
+    const pickup = new Date(pickupDate);
+    if (isNaN(pickup.getTime())) return; // Guard: only run if pickupDate is a valid date
+    const newDropoff = format(addDays(pickup, durationObj.days), 'yyyy-MM-dd');
     setDropoffDate(newDropoff);
   }, [pickupDate, selectedDuration]);
 

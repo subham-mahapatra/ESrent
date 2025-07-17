@@ -11,6 +11,7 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = params;
+    console.log('Fetching brand by id:', id);
     
     if (!id) {
       return NextResponse.json(

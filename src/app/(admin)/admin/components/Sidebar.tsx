@@ -34,7 +34,7 @@ export function Sidebar() {
       setTimeout(() => {
         router.replace('/admin/login');
       }, 100); // 100ms delay to allow state to update
-    } catch (err) {
+    } catch {
       alert('Logout failed');
     }
   };

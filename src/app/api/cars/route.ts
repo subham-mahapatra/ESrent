@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
     // Filter parameters
     if (searchParams.get('brand')) filters.brand = searchParams.get('brand')!;
     if (searchParams.get('category')) filters.category = searchParams.get('category')!;
+    if (searchParams.get('categoryId')) filters.categoryId = searchParams.get('categoryId')!;
     if (searchParams.get('transmission')) filters.transmission = searchParams.get('transmission')!;
     if (searchParams.get('fuel')) filters.fuel = searchParams.get('fuel')!;
     if (searchParams.get('minPrice')) filters.minPrice = Number(searchParams.get('minPrice'));
@@ -21,6 +22,7 @@ export async function GET(request: NextRequest) {
     if (searchParams.get('isAvailable')) filters.isAvailable = searchParams.get('isAvailable') === 'true';
     if (searchParams.get('isFeatured')) filters.isFeatured = searchParams.get('isFeatured') === 'true';
     if (searchParams.get('search')) filters.search = searchParams.get('search')!;
+    if (searchParams.get('brandId')) filters.brandId = searchParams.get('brandId');
 
     // Pagination and sorting
     if (searchParams.get('page')) searchOptions.page = Number(searchParams.get('page'));
@@ -61,7 +63,7 @@ export async function POST(request: NextRequest) {
     console.log('POST /api/cars body:', body);
     
     // Validate required fields
-    const requiredFields = ['brand', 'model', 'name', 'year', 'transmission', 'fuel', 'mileage', 'dailyPrice', 'images'];
+    const requiredFields = ['brand', 'brandId', 'model', 'name', 'year', 'transmission', 'fuel', 'mileage', 'dailyPrice', 'images'];
     for (const field of requiredFields) {
       if (!body[field]) {
         console.warn(`Missing required field: ${field}`);

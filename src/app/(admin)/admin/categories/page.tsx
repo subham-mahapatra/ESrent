@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertCircle, Pencil, Trash2, Plus } from 'lucide-react';
 import { Category } from '@/types/category';
@@ -11,10 +11,10 @@ import { TableSkeleton } from '@/components/ui/table-skeleton';
 import { useToast } from '@/components/hooks/use-toast';
 import { useCategories } from '@/hooks/useApi';
 import { useAuth } from '@/hooks/useApi';
-import { PaginatedResponse } from '@/lib/services/frontendServices';
 import { frontendServices } from '@/lib/services/frontendServices';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { StatusModal } from '@/components/admin/status-modal';
+import Image from 'next/image';
 
 export default function AdminCategories() {
   const { isAuthenticated, isInitialized } = useAuth();
@@ -190,20 +190,21 @@ export default function AdminCategories() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(data && 'categories' in data && Array.isArray(data.categories) ? data.categories : []).map((category: Category) => (
+                  {(Array.isArray(data?.data) ? data.data : []).map((category: Category) => (
                     <TableRow key={category.id} className="transition-colors hover:bg-muted/50">
                       <TableCell>
                         {category.image ? (
                           <div className="relative w-12 h-12">
-                            <img
+                            <Image
                               src={category.image}
                               alt={category.name}
-                              className="w-full h-full object-cover rounded-md"
+                              fill
+                              className="object-cover rounded"
                             />
                           </div>
                         ) : (
-                          <div className="w-12 h-12 bg-muted rounded-md flex items-center justify-center">
-                            <span className="text-xs text-muted-foreground">No image</span>
+                          <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
+                            <span className="text-muted-foreground">No image</span>
                           </div>
                         )}
                       </TableCell>

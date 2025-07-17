@@ -25,9 +25,9 @@ export default function AdminLogin() {
         setError(result.error || 'Invalid email or password');
       }
       // Do NOT redirect here; let the useEffect handle it
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Login error:', error);
-      setError(error.message || 'Failed to login');
+      setError((error as Error).message || 'Failed to login');
     } finally {
       setLoading(false);
     }

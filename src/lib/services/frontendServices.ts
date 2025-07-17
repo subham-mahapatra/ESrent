@@ -85,6 +85,7 @@ class FrontendServices {
     search?: string;
     brand?: string;
     category?: string;
+    categoryId?: string;
     minPrice?: number;
     maxPrice?: number;
     page?: number;
@@ -215,6 +216,10 @@ class FrontendServices {
     const endpoint = `/categories${queryString ? `?${queryString}` : ''}`;
     
     return this.request<PaginatedResponse<any>>(endpoint);
+  }
+
+  async getCategoriesWithCarCounts() {
+    return this.request<{ categories: any[] }>('/categories?withCarCounts=true');
   }
 
   async getCategory(id: string) {

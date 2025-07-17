@@ -1,5 +1,3 @@
-import { IBrand } from '@/lib/models/brandSchema';
-
 export interface Brand {
   id: string;
   name: string;

@@ -1,9 +1,7 @@
-import CarDetails from './carDetails'
+'use client'
 
-type Props = {
-  params: Promise<{ id: string }>
-}
+import CarDetails from '@/components/car/carDetails';
 
-export default async function CarDetailsPage({ params }: Props) {
-  return <CarDetails id={(await params).id} />
+export default function CarDetailsPage() {
+    return <CarDetails />;
 }

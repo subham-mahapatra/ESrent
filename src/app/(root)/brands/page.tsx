@@ -10,11 +10,16 @@ import { PageHeader } from '@/components/PageHeader';
 import { useBrands } from '@/hooks/useApi';
 
 export default function BrandsPage() {
-  const { data: brandsData, loading: brandsLoading, error: brandsError } = useBrands({ limit: 100 });
+  const { data: brandsData, loading: brandsLoading } = useBrands({ limit: 100 });
   
   const brands = brandsData?.data || [];
   const loading = brandsLoading;
 
+  useEffect(() => {
+    brands.forEach(brand => {
+      console.log('Brand:', brand.name, 'ID:', brand.id);
+    });
+  }, [brands]);
 
   if (loading) {
     return (
@@ -39,7 +44,7 @@ export default function BrandsPage() {
           {brands.map((brand: Brand) => (
             <Link
               key={brand.id}
-              href={`/brand/${encodeURIComponent(brand.slug)}`}
+              href={`/brand/${encodeURIComponent(brand.id)}`}
               className="p-4 bg-card rounded-xl flex flex-col items-center justify-center hover:bg-accent transition-colors shadow-lg border border-border text-foreground"
             >
               <div className="w-16 h-16 relative mb-2">

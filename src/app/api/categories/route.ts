@@ -6,6 +6,14 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     
+    // Check if we want categories with car counts
+    const withCarCounts = searchParams.get('withCarCounts') === 'true';
+    
+    if (withCarCounts) {
+      const categories = await CategoryService.getAllCategoriesWithCarCounts();
+      return NextResponse.json({ data: categories });
+    }
+    
     // Parse filters
     const filters: CategoryFilters = {};
     const searchOptions: CategorySearchOptions = {};
@@ -22,8 +30,13 @@ export async function GET(request: NextRequest) {
     if (searchParams.get('sortOrder')) searchOptions.sortOrder = searchParams.get('sortOrder') as 'asc' | 'desc';
 
     const result = await CategoryService.getAllCategories(filters, searchOptions);
-    
-    return NextResponse.json(result);
+    // Always return { data: categories, ... } for frontend compatibility
+    return NextResponse.json({
+      data: result.categories,
+      total: result.total,
+      page: result.page,
+      totalPages: result.totalPages
+    });
   } catch (error) {
     console.error('Error in GET /api/categories:', error);
     return NextResponse.json(

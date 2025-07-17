@@ -1,5 +1,3 @@
-import { ICategory } from '@/lib/models/categorySchema';
-
 export interface Category {
   id?: string;
   name: string;

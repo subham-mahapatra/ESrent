@@ -16,7 +16,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogClose,
 } from '@/components/ui/dialog';
 import { Brand } from '@/types/brand';
 
@@ -50,7 +49,7 @@ export default function AdminBrands() {
       const data = await res.json();
       setBrands(data.data || []);
       setTotalPages(data.totalPages || 1);
-    } catch (err) {
+    } catch {
       setError('Failed to fetch brands');
     } finally {
       setLoading(false);
@@ -94,7 +93,7 @@ export default function AdminBrands() {
         status: 'success',
       });
       fetchBrands(page);
-    } catch (err) {
+    } catch {
       setStatusModal({
         open: true,
         title: 'Error',
@@ -125,7 +124,7 @@ export default function AdminBrands() {
         status: 'success',
       });
       fetchBrands(page);
-    } catch (err) {
+    } catch {
       setStatusModal({
         open: true,
         title: 'Error',
@@ -163,11 +162,57 @@ export default function AdminBrands() {
 
   if (brands.length === 0) {
     return (
-      <Card>
-        <CardContent className="p-6 flex flex-col items-center justify-center min-h-[200px]">
-          <p className="text-muted-foreground text-lg">No brands found.</p>
-        </CardContent>
-      </Card>
+      <div className="container mx-auto py-10">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-foreground">Manage Brands</h1>
+          <Button
+            onClick={() => {
+              setSelectedBrand(undefined);
+              setDialogOpen(true);
+            }}
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Add Brand
+          </Button>
+        </div>
+        <Card>
+          <CardContent className="p-6 flex flex-col items-center justify-center min-h-[200px]">
+            <p className="text-muted-foreground text-lg">No brands found.</p>
+          </CardContent>
+        </Card>
+        <BrandDialog
+          brand={selectedBrand}
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          onSave={handleSaveBrand}
+        />
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Brand</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete this brand? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleDeleteBrand}>
+                Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        <StatusModal
+          open={statusModal.open}
+          title={statusModal.title}
+          description={statusModal.description}
+          status={statusModal.status}
+          onOpenChange={open => setStatusModal(s => ({ ...s, open }))}
+        />
+      </div>
     );
   }
 
