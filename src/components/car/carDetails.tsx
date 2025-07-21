@@ -1,6 +1,9 @@
 "use client"
 
+import type React from "react"
+
 import { useEffect, useState } from "react"
+import { format, differenceInCalendarDays, parseISO } from "date-fns"
 import { useParams, useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -19,11 +22,10 @@ import {
   Car,
   Users,
   Tag,
-  MessageCircle,
   Rocket,
 } from "lucide-react"
 import Image from "next/image"
-import { FaWhatsapp } from "react-icons/fa";
+import { FaWhatsapp } from "react-icons/fa"
 
 interface CarDetailsInterface {
   images: string[]
@@ -53,9 +55,11 @@ export default function CarDetails() {
   const [isClient, setIsClient] = useState(false)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
-  // Mock dates for demo - in real app, these would come from URL params or state
-  const [pickupDate] = useState("Sun, Jul 13")
-  const [returnDate] = useState("Tue, Jul 15")
+  // Date pickers state
+  const today = format(new Date(), "yyyy-MM-dd")
+  const tomorrow = format(new Date(Date.now() + 24 * 60 * 60 * 1000), "yyyy-MM-dd")
+  const [pickupDate, setPickupDate] = useState(today)
+  const [returnDate, setReturnDate] = useState(tomorrow)
   const [location] = useState("Dubai")
 
   useEffect(() => {
@@ -67,7 +71,8 @@ export default function CarDetails() {
     loading,
     error,
   } = useCar(carId) as { data: CarDetailsInterface | null; loading: boolean; error: any }
-  const { data: brandData } = useBrand((car as any)?.brandId || "");
+
+  const { data: brandData } = useBrand((car as any)?.brandId || "")
   const { data: categoriesData, loading: categoriesLoading } = useCategories()
   const categories = categoriesData?.data || []
 
@@ -78,18 +83,21 @@ export default function CarDetails() {
       if (c.id) acc[c.id] = c.name
       return acc
     }, {})
+
   const transmissionMap = categories
     .filter((c: any) => c.type === "transmission")
     .reduce((acc: any, c: any) => {
       if (c.id) acc[c.id] = c.name
       return acc
     }, {})
+
   const fuelTypeMap = categories
     .filter((c: any) => c.type === "fuelType")
     .reduce((acc: any, c: any) => {
       if (c.id) acc[c.id] = c.name
       return acc
     }, {})
+
   const tagMap = categories
     .filter((c: any) => c.type === "tag")
     .reduce((acc: any, c: any) => {
@@ -127,8 +135,37 @@ export default function CarDetails() {
   }
 
   const calculateTotal = () => {
-    const days = 2 // This would be calculated from pickup/return dates
-    return car?.dailyPrice ? car.dailyPrice * days : 0
+    if (!pickupDate || !returnDate || !car?.dailyPrice) return 0
+    const start = parseISO(pickupDate)
+    const end = parseISO(returnDate)
+    let days = differenceInCalendarDays(end, start)
+    if (isNaN(days) || days < 1) days = 1
+    return car.dailyPrice * days
+  }
+
+  const getDayCount = () => {
+    if (!pickupDate || !returnDate) return 1
+    const start = parseISO(pickupDate)
+    const end = parseISO(returnDate)
+    let days = differenceInCalendarDays(end, start)
+    if (isNaN(days) || days < 1) days = 1
+    return days
+  }
+
+  const handlePickupDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newPickupDate = e.target.value
+    setPickupDate(newPickupDate)
+
+    // If return date is before or same as pickup date, set it to next day
+    if (returnDate <= newPickupDate) {
+      const nextDay = new Date(newPickupDate)
+      nextDay.setDate(nextDay.getDate() + 1)
+      setReturnDate(format(nextDay, "yyyy-MM-dd"))
+    }
+  }
+
+  const handleReturnDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setReturnDate(e.target.value)
   }
 
   if (!isClient) {
@@ -174,6 +211,7 @@ export default function CarDetails() {
     )
   }
 
+
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
@@ -198,24 +236,79 @@ export default function CarDetails() {
       {/* Date Selection */}
       <div className="bg-gray-900/40 border-b border-gray-700">
         <div className="container mx-auto px-4 py-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-md">
-            <div className="flex items-center gap-3 p-4 bg-gray-800/50 rounded-xl border border-gray-700 backdrop-blur-sm">
-              <div className="w-10 h-10 bg-blue-600/20 rounded-full flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-blue-400" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-400">Pickup Date</p>
-                <p className="text-white font-medium">{pickupDate}</p>
-              </div>
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 md:gap-8 w-full">
+            {/* Pickup Date Picker */}
+            <div className="flex-1 min-w-0">
+              <label
+                htmlFor="pickup-date"
+                className="relative block"
+                onClick={e => {
+                  if (typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches) {
+                    e.preventDefault();
+                    const dateInput = document.getElementById('pickup-date') as HTMLInputElement;
+                    if (dateInput) dateInput.showPicker();
+                  }
+                }}
+              >
+                <div className="flex items-center gap-3 p-4 bg-gray-800/70 rounded-xl border border-gray-700 shadow-sm backdrop-blur-sm cursor-pointer hover:bg-gray-800/90 transition-colors">
+                  <div className="w-10 h-10 bg-blue-600/20 rounded-full flex items-center justify-center">
+                    <Calendar className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-400">Pickup Date</p>
+                    <span className="text-white font-medium truncate block">
+                      {pickupDate ? format(parseISO(pickupDate), "EEE, MMM d") : "Select date"}
+                    </span>
+                  </div>
+                  <input
+                    id="pickup-date"
+                    type="date"
+                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full touch-manipulation bg-black text-white"
+                    style={{ WebkitTapHighlightColor: 'transparent' }}
+                    value={pickupDate}
+                    min={today}
+                    max={returnDate}
+                    onChange={handlePickupDateChange}
+                    aria-label="Pickup date"
+                  />
+                </div>
+              </label>
             </div>
-            <div className="flex items-center gap-3 p-4 bg-gray-800/50 rounded-xl border border-gray-700 backdrop-blur-sm">
-              <div className="w-10 h-10 bg-blue-600/20 rounded-full flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-blue-400" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-400">Return Date</p>
-                <p className="text-white font-medium">{returnDate}</p>
-              </div>
+            {/* Return Date Picker */}
+            <div className="flex-1 min-w-0">
+              <label
+                htmlFor="return-date"
+                className="relative block"
+                onClick={e => {
+                  if (typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches) {
+                    e.preventDefault();
+                    const dateInput = document.getElementById('return-date') as HTMLInputElement;
+                    if (dateInput) dateInput.showPicker();
+                  }
+                }}
+              >
+                <div className="flex items-center gap-3 p-4 bg-gray-800/70 rounded-xl border border-gray-700 shadow-sm backdrop-blur-sm cursor-pointer hover:bg-gray-800/90 transition-colors">
+                  <div className="w-10 h-10 bg-blue-600/20 rounded-full flex items-center justify-center">
+                    <Calendar className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-400">Return Date</p>
+                    <span className="text-white font-medium truncate block">
+                      {returnDate ? format(parseISO(returnDate), "EEE, MMM d") : "Select date"}
+                    </span>
+                  </div>
+                  <input
+                    id="return-date"
+                    type="date"
+                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full touch-manipulation bg-black text-white"
+                    style={{ WebkitTapHighlightColor: 'transparent' }}
+                    value={returnDate}
+                    min={pickupDate}
+                    onChange={handleReturnDateChange}
+                    aria-label="Return date"
+                  />
+                </div>
+              </label>
             </div>
           </div>
         </div>
@@ -259,12 +352,6 @@ export default function CarDetails() {
                 )}
               </div>
             </div>
-
-            {/* Pricing */}
-            <div className="space-y-2">
-              <div className="text-2xl font-bold text-white">AED {car.dailyPrice.toLocaleString()}/Day</div>
-              <div className="text-gray-400">Total: AED {calculateTotal().toLocaleString()} for 2 days</div>
-            </div>
           </div>
 
           {/* Right Side - Details */}
@@ -273,10 +360,10 @@ export default function CarDetails() {
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg bg-white overflow-hidden">
-                  {brandData && typeof brandData.logo === 'string' && brandData.logo ? (
+                  {brandData && Array.isArray(brandData.data) && brandData.data[0]?.logo ? (
                     <Image
-                      src={brandData.logo as string}
-                      alt={typeof brandData.name === 'string' ? brandData.name : "Brand Logo"}
+                      src={brandData.data[0].logo}
+                      alt={brandData.data[0].name || "Brand Logo"}
                       width={48}
                       height={48}
                       className="object-contain w-12 h-12"
@@ -375,33 +462,59 @@ export default function CarDetails() {
                 )}
               </div>
             </div>
-
-            {/* Description */}
-            {car.description && (
-              <div className="space-y-3">
-                <h3 className="text-lg font-semibold text-white">Description</h3>
-                <p className="text-gray-300 leading-relaxed">{car.description}</p>
-              </div>
-            )}
           </div>
-        </div>
+        </div> {/* end grid */}
 
-        {/* Book Now Button */}
-        <div className="fixed bottom-6 right-6">
-          <Button
-            size="lg"
-            className="bg-green-600 hover:bg-green-700 text-white gap-2 px-8 py-4 text-lg rounded-full shadow-2xl border border-green-500/20 backdrop-blur-sm"
-            onClick={() => {
-              const whatsappNumber = "+971553553626"; // WhatsApp number
-              const message = `Hi, I'm interested in renting the ${car.brand} ${car.model}`; // Default message
-              const encodedMessage = encodeURIComponent(message);
-              window.open(`https://wa.me/${whatsappNumber}?text=${encodedMessage}`, '_blank');
-            }}
-          >
-            <FaWhatsapp className="w-5 h-5" />
-            Book Now
-          </Button>
+        {/* Description at the bottom, full width */}
+        {car.description && (
+          <div className="mt-12 w-full max-w-7xl mx-auto px-4">
+            <h3 className="text-2xl font-semibold text-white mb-3">Description</h3>
+            <p className="text-gray-300 leading-relaxed text-lg rounded-xl p-6 border border-gray-700 shadow-md">
+              {car.description}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Floating Bar at Bottom */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/95 border-t border-gray-800 shadow-2xl px-4 sm:px-16 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 w-full">
+          <span className="text-lg sm:text-2xl font-bold text-white">AED {car.dailyPrice.toLocaleString()}/Day</span>
+          <span className="text-sm sm:text-base text-gray-400">
+            Total: AED {calculateTotal().toLocaleString()} for {getDayCount()} day{getDayCount() > 1 ? "s" : ""}
+          </span>
         </div>
+        <Button
+          size="lg"
+          className="bg-green-600 hover:bg-green-700 text-white gap-2 px-8 py-4 text-lg rounded-full shadow-xl border border-green-500/20 backdrop-blur-sm w-full sm:w-auto"
+          onClick={() => {
+            const whatsappNumber = "+971553553626"
+            const dayCount = getDayCount();
+            const pickup = pickupDate ? format(parseISO(pickupDate), "EEE, MMM d, yyyy") : "-";
+            const dropoff = returnDate ? format(parseISO(returnDate), "EEE, MMM d, yyyy") : "-";
+            const details = [
+              `Car: ${car.brand || ''} ${car.model || ''} (${car.year || ''})`,
+              `Name: ${car.name || ''}`,
+              car.transmission ? `Transmission: ${car.transmission}` : '',
+              car.seater ? `Seater: ${car.seater}` : '',
+              car.engine ? `Engine: ${car.engine}` : '',
+              car.mileage ? `Mileage: ${car.mileage}` : '',
+              fuelTypeNames && fuelTypeNames.length ? `Fuel Type: ${fuelTypeNames[0]}` : '',
+              '',
+              `Pickup Date: ${pickup}`,
+              `Return Date: ${dropoff}`,
+              `Total Days: ${dayCount}`,
+              '',
+              `Total Price: AED ${calculateTotal().toLocaleString()}`
+            ].filter(Boolean).join("\n");
+            const message = `Hi, I'm interested in renting this car.\n\n${details}`;
+            const encodedMessage = encodeURIComponent(message);
+            window.open(`https://wa.me/${whatsappNumber}?text=${encodedMessage}`, "_blank");
+          }}
+        >
+          <FaWhatsapp className="w-5 h-5" />
+          Book Now
+        </Button>
       </div>
     </div>
   )
@@ -455,14 +568,12 @@ function CarDetailsSkeleton() {
                 <Skeleton className="h-8 w-20 bg-gray-700/50" />
               </div>
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <Skeleton className="h-20 w-full bg-gray-700/50 rounded-xl" />
               <Skeleton className="h-20 w-full bg-gray-700/50 rounded-xl" />
               <Skeleton className="h-20 w-full bg-gray-700/50 rounded-xl" />
               <Skeleton className="h-20 w-full bg-gray-700/50 rounded-xl" />
             </div>
-
             <div className="space-y-3">
               <Skeleton className="h-6 w-24 bg-gray-700/50" />
               <div className="flex flex-wrap gap-2">
@@ -471,7 +582,6 @@ function CarDetailsSkeleton() {
                 <Skeleton className="h-8 w-18 bg-gray-700/50 rounded" />
               </div>
             </div>
-
             <div className="space-y-3">
               <Skeleton className="h-6 w-32 bg-gray-700/50" />
               <Skeleton className="h-20 w-full bg-gray-700/50" />
