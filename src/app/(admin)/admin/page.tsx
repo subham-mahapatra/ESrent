@@ -22,8 +22,6 @@ export default function AdminDashboard() {
   const loading = carsLoading;
   const error = carsError ? { error: 'Failed to fetch cars', details: carsError } : null;
 
-  console.log('carsError:', carsError, 'carsLoading:', carsLoading, 'carsData:', carsData);
-
   if (loading) {
     return (
       <Card>

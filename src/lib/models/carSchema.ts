@@ -47,13 +47,12 @@ const carSchema = new Schema<ICar>({
   },
   year: {
     type: Number,
-    required: true,
+    required: false,
     min: 1900,
     max: new Date().getFullYear() + 1
   },
   mileage: {
     type: Number,
-    required: true,
     min: 0
   },
   dailyPrice: {

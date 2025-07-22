@@ -11,6 +11,8 @@ import { Spotlight } from '@/components/ui/spotlight';
 interface CarCardProps {
   car: Car;
   onClick?: () => void;
+  brandName?: string;
+  seater?: number;
   className?: string;
   linkHref?: string;
   carTypeNames?: string[];
@@ -29,12 +31,12 @@ export function CarCard({ car, onClick, linkHref, carTypeNames = [], transmissio
   const carName = car.name || `${car.brand || 'Unknown'} ${car.model || 'Model'}`;
   
   // Safely get car details with fallbacks
-  const carYear = car.year || '';
+  const carSeat = car.seater || '';
   const carType = carTypeNames[0] || '';
   const carTransmission = transmissionNames[0] || '';
   const carFuel = fuelTypeNames[0] || '';
-  const carMileage = car.mileage || 0;
   const carPrice = car.dailyPrice || 0;
+  const carBrand = car.brand || '';
 
   const handleWhatsAppClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -63,15 +65,11 @@ export function CarCard({ car, onClick, linkHref, carTypeNames = [], transmissio
           <div className="absolute bottom-0 w-full p-5 space-y-3">
             <h3 className="text-heading-3 text-white">{carName}</h3>
             <div className="flex items-center gap-2 text-sm text-white/70">
-              {carYear && <span>{carYear}</span>}
-              {carType && carYear && <span>•</span>}
+              {carBrand && <span>{carBrand}</span>}
+              {carType && carBrand && <span>•</span>}
               {carType && <span>{carType}</span>}
-              {carTransmission && (carType || carYear) && <span>•</span>}
-              {carTransmission && <span>{carTransmission}</span>}
-              {carFuel && (carTransmission || carType || carYear) && <span>•</span>}
-              {carFuel && <span>{carFuel}</span>}
-              <span>•</span>
-              <span>{carMileage}kms/day</span>
+              {carSeat && (carType || carBrand) && <span>•</span>}
+              {carSeat && <span>{carSeat} seater</span>}
             </div>
             {tagNames.length > 0 && (
               <div className="flex flex-wrap gap-1 text-xs text-primary pt-1">

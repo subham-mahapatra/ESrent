@@ -264,6 +264,8 @@ export default function CarsPage() {
           {paginatedCars.map((car) => (
             <CarCard
               key={car.id}
+              brandName={car.brand}
+              seater={car.seater}
               car={car}
               carTypeNames={(car.carTypeIds || []).map((id) => carTypeMap[id]).filter(Boolean)}
               transmissionNames={(car.transmissionIds || []).map((id) => transmissionMap[id]).filter(Boolean)}

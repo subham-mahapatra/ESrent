@@ -4,16 +4,13 @@ import { useState } from 'react';
 import { Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion } from "framer-motion";
+import { useEffect } from 'react';
+import { frontendServices } from '@/lib/services/frontendServices';
+import { Category } from '@/types/category';
 
-const carTypes = [
-  "Luxury Sedan",
-  "Sports Car",
-  "SUV",
-  "Supercar",
-  "Convertible",
-  "Electric",
-  "Hybrid"
-];
+interface CategoryWithCarCount extends Category {
+  realCarCount: number;
+}
 
 const durations = [
   { label: "Daily", value: "daily" },
@@ -25,6 +22,41 @@ export function HeroSection() {
   const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
   const [selectedDuration, setSelectedDuration] = useState<string>("daily");
   const [selectedType, setSelectedType] = useState<string>("");
+  const [categories, setCategories] = useState<CategoryWithCarCount[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+    useEffect(() => {
+      const loadCategoriesWithCarCount = async () => {
+        try {
+          setLoading(true);
+          // Fetch categories with car counts from API
+          const response: unknown = await frontendServices.getCategoriesWithCarCounts();
+          let categoriesArr: Category[] = [];
+          if (typeof response === 'object' && response !== null) {
+            if (Array.isArray((response as { data?: unknown }).data)) {
+              categoriesArr = (response as { data: Category[] }).data;
+            } else if (Array.isArray((response as { categories?: unknown }).categories)) {
+              categoriesArr = (response as { categories: Category[] }).categories;
+            }
+          }
+          const categoriesWithCount = categoriesArr.map((category) => ({
+            ...category,
+            realCarCount: category.carCount || 0
+          }));
+          setCategories(categoriesWithCount);
+        } catch (error) {
+          console.error('Error loading categories with car count:', error);
+          // Fallback to empty array if API fails
+          setCategories([]);
+        } finally {
+          setLoading(false);
+        }
+      };
+  
+      loadCategoriesWithCarCount();
+    }, []);
+
+    console.log('Categories...........:', categories);
 
   const handleSearch = () => {
     const message = `Hi, I'm interested in renting a car with the following preferences:
@@ -106,8 +138,8 @@ ${selectedType ? `Car Type: ${selectedType}` : ''}`;
                 className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white appearance-none"
               >
                 <option value="">Select car type</option>
-                {carTypes.map((type, index) => (
-                  <option key={`cartype-${index}-${type}`} value={type}>{type}</option>
+                {categories.map((data, index) => (
+                  <option key={`cartype-${index}-${data.name}`} value={data.name}>{data.name}</option>
                 ))}
               </select>
             </div>

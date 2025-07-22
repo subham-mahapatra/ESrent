@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     console.log('POST /api/cars body:', body);
     
     // Validate required fields
-    const requiredFields = ['brand', 'brandId', 'model', 'name', 'year', 'mileage', 'dailyPrice', 'images', 'carTypeIds', 'transmissionIds', 'fuelTypeIds'];
+    const requiredFields = ['brand', 'brandId', 'model', 'name', 'dailyPrice', 'images', 'carTypeIds'];
     for (const field of requiredFields) {
       if (!body[field] || (Array.isArray(body[field]) && body[field].length === 0)) {
         console.warn(`Missing required field: ${field}`);

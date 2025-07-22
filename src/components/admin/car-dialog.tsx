@@ -34,8 +34,8 @@ const defaultCar: Partial<Car> = {
   name: '',
   brand: '',
   model: '',
-  year: new Date().getFullYear(),
-  mileage: 0,
+  // year: new Date().getFullYear(),
+  // mileage: 0,
   dailyPrice: 0,
   images: [],
   description: '',
@@ -150,14 +150,14 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
       alert('Model is required');
       return;
     }
-    if (!formData.year || formData.year < 1900) {
-      alert('Valid year is required');
-      return;
-    }
-    if (!formData.mileage || formData.mileage <= 0) {
-      alert('Valid mileage is required');
-      return;
-    }
+    // if (!formData.year || formData.year < 1900) {
+    //   alert('Valid year is required');
+    //   return;
+    // }
+    // if (!formData.mileage || formData.mileage <= 0) {
+    //   alert('Valid mileage is required');
+    //   return;
+    // }
     if (!formData.dailyPrice || formData.dailyPrice <= 0) {
       alert('Valid daily price is required');
       return;
@@ -166,14 +166,14 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
       alert('Car type is required');
       return;
     }
-    if (!formData.fuelTypeIds || formData.fuelTypeIds.length === 0) {
-      alert('Fuel type is required');
-      return;
-    }
-    if (!formData.transmissionIds || formData.transmissionIds.length === 0) {
-      alert('Transmission is required');
-      return;
-    }
+    // if (!formData.fuelTypeIds || formData.fuelTypeIds.length === 0) {
+    //   alert('Fuel type is required');
+    //   return;
+    // }
+    // if (!formData.transmissionIds || formData.transmissionIds.length === 0) {
+    //   alert('Transmission is required');
+    //   return;
+    // }
     
     // Ensure tags are synced before submit
     const tagsArray = tagsInput.split(',').map(tag => tag.trim()).filter(Boolean);
@@ -184,20 +184,20 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
       brand: formData.brand?.trim() || '',
       brandId: formData.brandId,
       model: formData.model?.trim() || formData.name?.trim() || '',
-      year: formData.year || new Date().getFullYear(),
+      // year: formData.year || new Date().getFullYear(),
       dailyPrice: formData.dailyPrice || 0,
-      mileage: formData.mileage || 0,
+      // mileage: formData.mileage || 0,
       images: formData.images || [],
       description: formData.description || '',
       features: formData.features || [],
       available: formData.available ?? true,
       featured: formData.featured ?? false,
-      engine: formData.engine,
-      power: formData.power,
+      // engine: formData.engine,
+      // power: formData.power,
       seater: formData.seater,
       carTypeIds: formData.carTypeIds || [],
-      transmissionIds: formData.transmissionIds || [],
-      fuelTypeIds: formData.fuelTypeIds || [],
+      // transmissionIds: formData.transmissionIds || [],
+      // fuelTypeIds: formData.fuelTypeIds || [],
       tagIds: formData.tagIds || [],
     };
     
@@ -260,7 +260,7 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label htmlFor="year" className="text-card-foreground">Year *</Label>
                 <Input
                   id="year"
@@ -269,7 +269,7 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
                   onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) || 0 })}
                   required
                 />
-              </div>
+              </div> */}
               <div className="space-y-2">
                 <Label htmlFor="model" className="text-card-foreground">Model</Label>
                 <Input
@@ -279,7 +279,7 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
                   required
                 />
               </div>
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label htmlFor="mileage" className="text-card-foreground">Mileage *</Label>
                 <Input
                   id="mileage"
@@ -288,23 +288,23 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
                   onChange={(e) => setFormData({ ...formData, mileage: parseInt(e.target.value) || 0 })}
                   required
                 />
-              </div>
-              <div className="space-y-2">
+              </div> */}
+              {/* <div className="space-y-2">
                 <Label htmlFor="engine" className="text-card-foreground">Engine</Label>
                 <Input
                   id="engine"
                   value={formData.engine || ''}
                   onChange={(e) => setFormData({ ...formData, engine: e.target.value })}
                 />
-              </div>
-              <div className="space-y-2">
+              </div> */}
+              {/* <div className="space-y-2">
                 <Label htmlFor="power" className="text-card-foreground">Power</Label>
                 <Input
                   id="power"
                   value={formData.power || ''}
                   onChange={(e) => setFormData({ ...formData, power: e.target.value })}
                 />
-              </div>
+              </div> */}
               <div className="space-y-2">
                 <Label htmlFor="seater" className="text-card-foreground">Seater</Label>
                 <Input
@@ -344,7 +344,7 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
               </div>
 
               {/* Transmission dropdown single-select */}
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label className="text-card-foreground">Transmission</Label>
                 <Select
                   value={formData.transmissionIds?.[0] || ''}
@@ -362,10 +362,10 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
+              </div> */}
 
               {/* Fuel Types dropdown single-select */}
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label className="text-card-foreground">Fuel Type</Label>
                 <Select
                   value={formData.fuelTypeIds?.[0] || ''}
@@ -383,7 +383,7 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
+              </div> */}
 
               {/* Tags remains as checkbox-based multi-select */}
               <div className="space-y-2">

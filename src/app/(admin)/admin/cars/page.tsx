@@ -129,7 +129,7 @@ export default function AdminCars() {
         );
       } else {
         // Ensure carData matches CreateCarData type
-        const requiredFields = ['brand', 'model', 'name', 'year', 'mileage', 'dailyPrice', 'images', 'carTypeIds', 'transmissionIds', 'fuelTypeIds'];
+        const requiredFields = ['brand', 'model', 'name', 'dailyPrice', 'images', 'carTypeIds'];
         for (const field of requiredFields) {
           if (!((carData as any)[field]) || (Array.isArray((carData as any)[field]) && (carData as any)[field].length === 0)) {
             throw new Error(`Missing required field: ${field}`);

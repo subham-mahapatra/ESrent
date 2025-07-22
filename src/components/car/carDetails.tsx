@@ -23,12 +23,14 @@ import {
   Users,
   Tag,
   Rocket,
+  Hexagon
 } from "lucide-react"
 import Image from "next/image"
 import { FaWhatsapp } from "react-icons/fa"
 
 interface CarDetailsInterface {
   images: string[]
+  available: boolean
   name: string
   dailyPrice: number
   year: number
@@ -251,8 +253,8 @@ export default function CarDetails() {
                 }}
               >
                 <div className="flex items-center gap-3 p-4 bg-gray-800/70 rounded-xl border border-gray-700 shadow-sm backdrop-blur-sm cursor-pointer hover:bg-gray-800/90 transition-colors">
-                  <div className="w-10 h-10 bg-blue-600/20 rounded-full flex items-center justify-center">
-                    <Calendar className="w-5 h-5 text-blue-400" />
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center">
+                    <Calendar className="w-5 h-5 text-[#44CAAD]" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-gray-400">Pickup Date</p>
@@ -288,8 +290,8 @@ export default function CarDetails() {
                 }}
               >
                 <div className="flex items-center gap-3 p-4 bg-gray-800/70 rounded-xl border border-gray-700 shadow-sm backdrop-blur-sm cursor-pointer hover:bg-gray-800/90 transition-colors">
-                  <div className="w-10 h-10 bg-blue-600/20 rounded-full flex items-center justify-center">
-                    <Calendar className="w-5 h-5 text-blue-400" />
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center">
+                    <Calendar className="w-5 h-5 text-[#44CAAD]" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-gray-400">Return Date</p>
@@ -362,8 +364,8 @@ export default function CarDetails() {
                 <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg bg-white overflow-hidden">
                   {brandData && Array.isArray(brandData.data) && brandData.data[0]?.logo ? (
                     <Image
-                      src={brandData.data[0].logo}
-                      alt={brandData.data[0].name || "Brand Logo"}
+                    src={brandData.data.find(brand => brand.id === (car as any).brandId)?.logo}
+                    alt={brandData.data.find(brand => brand.id === (car as any).brandId)?.name || "Brand Logo"}
                       width={48}
                       height={48}
                       className="object-contain w-12 h-12"
@@ -378,20 +380,24 @@ export default function CarDetails() {
               {/* Quick Stats */}
               <div className="grid grid-cols-3 gap-6">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-blue-600/20 rounded-full flex items-center justify-center">
-                    <Calendar className="w-4 h-4 text-blue-400" />
+                  <div className="w-8 h-8 bg-[#44CAAD]/20 rounded-full flex items-center justify-center">
+                    <Hexagon className="w-4 h-4 text-[#44CAAD]" />
                   </div>
-                  <span className="text-gray-300">{car.year}</span>
+                  <span className="text-gray-300">{car.brand}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-green-600/20 rounded-full flex items-center justify-center">
-                    <Settings className="w-4 h-4 text-green-400" />
+                  <div className="w-8 h-8 bg-[#44CAAD]/20 rounded-full flex items-center justify-center">
+                    <Settings className="w-4 h-4 text-[#44CAAD]" />
                   </div>
-                  <span className="text-gray-300">{transmissionNames[0] || "N/A"}</span>
+                  {car.available ? (
+                      <span className="text-gray-300">Available</span>
+                  ) : (
+                    <span className="text-gray-300">Not Available</span>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-purple-600/20 rounded-full flex items-center justify-center">
-                    <Users className="w-4 h-4 text-purple-400" />
+                  <div className="w-8 h-8 bg-[#44CAAD]/20 rounded-full flex items-center justify-center">
+                    <Users className="w-4 h-4 text-[#44CAAD]" />
                   </div>
                   <span className="text-gray-300">{car.seater ? `${car.seater} seater` : "N/A"}</span>
                 </div>
@@ -400,17 +406,17 @@ export default function CarDetails() {
 
             {/* Specifications */}
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div className="flex items-center gap-3 p-4 bg-gray-800/50 rounded-xl border border-gray-700 backdrop-blur-sm">
                   <div className="w-10 h-10 bg-yellow-600/20 rounded-full flex items-center justify-center">
                     <Zap className="w-5 h-5 text-yellow-400" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-400">Engine</p>
-                    <p className="text-white font-medium">{car.engine || "N/A"}</p>
+                    <p className="text-sm text-gray-400">Model</p>
+                    <p className="text-white font-medium">{car.model || "N/A"}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 p-4 bg-gray-800/50 rounded-xl border border-gray-700 backdrop-blur-sm">
+                {/* <div className="flex items-center gap-3 p-4 bg-gray-800/50 rounded-xl border border-gray-700 backdrop-blur-sm">
                   <div className="w-10 h-10 bg-red-600/20 rounded-full flex items-center justify-center">
                     <Rocket className="w-5 h-5 text-red-400" />
                   </div>
@@ -418,16 +424,16 @@ export default function CarDetails() {
                     <p className="text-sm text-gray-400">Mileage</p>
                     <p className="text-white font-medium">{car.mileage || "N/A"}</p>
                   </div>
-                </div>
-                <div className="flex items-center gap-3 p-4 bg-gray-800/50 rounded-xl border border-gray-700 backdrop-blur-sm">
+                </div> */}
+                {/* <div className="flex items-center gap-3 p-4 bg-gray-800/50 rounded-xl border border-gray-700 backdrop-blur-sm">
                   <div className="w-10 h-10 bg-green-600/20 rounded-full flex items-center justify-center">
                     <Fuel className="w-5 h-5 text-green-400" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-400">Fuel Type</p>
-                    <p className="text-white font-medium">{fuelTypeNames[0] || "N/A"}</p>
+                    <p className="text-sm text-gray-400">Seater</p>
+                    <p className="text-white font-medium">{car.seater || "N/A"}</p>
                   </div>
-                </div>
+                </div> */}
                 <div className="flex items-center gap-3 p-4 bg-gray-800/50 rounded-xl border border-gray-700 backdrop-blur-sm">
                   <div className="w-10 h-10 bg-purple-600/20 rounded-full flex items-center justify-center">
                     <Car className="w-5 h-5 text-purple-400" />
