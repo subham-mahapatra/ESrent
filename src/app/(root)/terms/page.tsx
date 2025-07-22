@@ -10,7 +10,7 @@ export default function TermsAndConditions() {
           <div className="prose prose-gray max-w-none">
             <section className="mb-8">
               <h2 className="heading-3 text-primary mb-4">1. Acceptance of Terms</h2>
-              <p className="text-gray-600">By accessing and using AutoLuxe&apos;s services, you agree to be bound by these Terms and Conditions. If you do not agree with any part of these terms, please do not use our services.</p>
+              <p className="text-gray-600">By accessing and using ES Rentals&apos;s services, you agree to be bound by these Terms and Conditions. If you do not agree with any part of these terms, please do not use our services.</p>
             </section>
 
             <section className="mb-8">

@@ -10,7 +10,7 @@ import { Settings, Database, Key, Globe } from 'lucide-react';
 
 export default function AdminSettings() {
   const [settings, setSettings] = useState({
-    siteName: 'AutoLuxe',
+    siteName: 'ES Rentals',
     enableRegistration: true,
     enableBooking: true,
     maintenanceMode: false,

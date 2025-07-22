@@ -4,7 +4,7 @@ import "../globals.css";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "Autoluxe - Luxury Car Rental in Dubai",
+  title: "ES Rentals - Luxury Car Rental in Dubai",
   description: "Find the best cars for rent in Dubai. Explore our wide range of luxury vehicles and book your dream car today.",
 };
 

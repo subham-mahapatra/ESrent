@@ -23,7 +23,7 @@ export function Header() {
             <Link href="/">
               <Image
                 src="/images/ES logo (1).svg"
-                alt="AutoLuxe Logo"
+                alt="ES Rentals Logo"
                 width={96}
                 height={96}
                 className="w-20 h-20 sm:w-24 sm:h-24"

@@ -3,8 +3,8 @@ import { PageHeader } from '@/components/PageHeader';
 import { FAQItem } from './components/FAQItem';
 
 export const metadata: Metadata = {
-  title: 'FAQ - AutoLuxe',
-  description: 'Frequently Asked Questions about AutoLuxe luxury car rental services in Dubai',
+  title: 'FAQ - ES Rentals',
+  description: 'Frequently Asked Questions about ES Rentals luxury car rental services in Dubai',
 };
 
 export default function FAQPage() {

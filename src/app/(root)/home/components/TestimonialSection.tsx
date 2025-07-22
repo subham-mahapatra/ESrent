@@ -13,14 +13,14 @@ import 'swiper/css/pagination';
 const testimonials = [
   {
     id: 1,
-    quote: "Autoluxe made finding my dream car so easy! The process was seamless and the customer service was top-notch.",
+    quote: "ES Rentals made finding my dream car so easy! The process was seamless and the customer service was top-notch.",
     author: "Jane Doe",
     location: "San Francisco, CA",
     imageUrl: "https://randomuser.me/api/portraits/women/1.jpg", // Example image
   },
   {
     id: 2,
-    quote: "I was hesitant about buying a car online, but Autoluxe exceeded my expectations. Highly recommended!",
+    quote: "I was hesitant about buying a car online, but ES Rentals exceeded my expectations. Highly recommended!",
     author: "John Smith",
     location: "New York, NY",
     imageUrl: "https://randomuser.me/api/portraits/men/1.jpg", // Example image
@@ -48,7 +48,7 @@ const testimonials = [
   },
     {
     id: 6,
-    quote: "Autoluxe offers a truly modern way to buy cars. User-friendly website and supportive staff.",
+    quote: "ES Rentals offers a truly modern way to buy cars. User-friendly website and supportive staff.",
     author: "Emily Davis",
     location: "Miami, FL",
     imageUrl: "https://randomuser.me/api/portraits/women/3.jpg", // Example image
