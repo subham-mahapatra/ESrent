@@ -16,6 +16,7 @@ interface FeaturedVehiclesProps {
 
 export function FeaturedVehicles({ cars, categories }: FeaturedVehiclesProps) {
   const [isClient, setIsClient] = useState(false);
+  const [showAll, setShowAll] = useState(false); // NEW: controls whether to show all cars
   
   // Ensure we're on the client side
   useEffect(() => {
@@ -39,6 +40,13 @@ export function FeaturedVehicles({ cars, categories }: FeaturedVehiclesProps) {
     typeof car.dailyPrice === 'number' &&
     car.dailyPrice > 0
   );
+
+  // NEW: Sort cars so featured come first, then the rest
+  const sortedCars = useMemo(() => {
+    const featured = validCars.filter(car => car.featured);
+    const nonFeatured = validCars.filter(car => !car.featured);
+    return [...featured, ...nonFeatured];
+  }, [validCars]);
 
   const [filteredCars, setFilteredCars] = useState<Car[]>(validCars);
   const [selectedFilters, setSelectedFilters] = useState(initialFilters);
@@ -69,14 +77,27 @@ export function FeaturedVehicles({ cars, categories }: FeaturedVehiclesProps) {
   const handleFiltersChange = (filters: FilterValues) => {
     setShouldResetFilters(false);
     setSelectedFilters(filters);
+
+    // Map filter names to IDs using categories
+    const typeIds = categories
+      .filter((c) => c.type === 'carType' && filters.types.includes(c.name.toLowerCase()))
+      .map((c) => c.id);
+    const tagIds = categories
+      .filter((c) => c.type === 'tag' && filters.tags.includes(c.name.toLowerCase()))
+      .map((c) => c.id);
+    const transmissionId = categories.find(
+      (c) => c.type === 'transmission' && c.name.toLowerCase() === filters.transmission
+    )?.id;
+
     const filtered = validCars.filter(car => {
       const matchesPrice = car.dailyPrice >= 1000 && car.dailyPrice <= filters.maxPrice;
       const matchesTransmission = !filters.transmission ||
-        (Array.isArray(car.transmissionIds) && car.transmissionIds[0] && car.transmissionIds[0] === filters.transmission);
-      const matchesType = filters.types.length === 0 ||
-        (Array.isArray(car.carTypeIds) && car.carTypeIds[0] && filters.types.includes(car.carTypeIds[0]));
-      // You may want to map IDs to names for a better UX
-      return matchesPrice && matchesTransmission && matchesType;
+        (Array.isArray(car.transmissionIds) && transmissionId && car.transmissionIds.includes(transmissionId));
+      const matchesType = typeIds.length === 0 ||
+        (Array.isArray(car.carTypeIds) && car.carTypeIds.some((id) => typeIds.includes(id)));
+      const matchesTags = tagIds.length === 0 ||
+        (Array.isArray(car.tagIds) && car.tagIds.some((id) => tagIds.includes(id)));
+      return matchesPrice && matchesTransmission && matchesType && matchesTags;
     });
     setFilteredCars(filtered);
   };
@@ -104,14 +125,16 @@ export function FeaturedVehicles({ cars, categories }: FeaturedVehiclesProps) {
       >
         <div className="flex items-center justify-between mb-6">
           <h2 className="font-heading text-heading-3">Featured Vehicles</h2>
-          <Link href="/cars" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-background text-white hover:bg-gray-100 hover:text-white/80 h-10 px-4 py-2">
-            View All
-          </Link>
         </div>
         <EmptyCars />
       </motion.section>
     );
   }
+
+  // Determine how many cars to show
+  const carsToShow = showAll ? filteredCars.length : Math.min(6, filteredCars.length);
+  const showViewAll = !showAll && filteredCars.length > 6;
+  const showShowLess = showAll && filteredCars.length > 6;
 
   return (
     <motion.section
@@ -124,13 +147,9 @@ export function FeaturedVehicles({ cars, categories }: FeaturedVehiclesProps) {
       <div className="flex items-center justify-between mb-6">
         <h2 className="font-heading text-heading-3">Featured Vehicles</h2>
         <div className="flex items-center gap-4">
-          <FilterModal onFiltersChange={handleFiltersChange} shouldReset={shouldResetFilters} />
-          <Link href="/cars" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-background text-white hover:bg-gray-100 hover:text-white/80 h-10 px-4 py-2">
-            View All
-          </Link>
+          <FilterModal onFiltersChange={handleFiltersChange} shouldReset={shouldResetFilters} categories={categories} />
         </div>
       </div>
-      
       {/* Selected Filters Display */}
       {hasActiveFilters && (
         <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -174,25 +193,26 @@ export function FeaturedVehicles({ cars, categories }: FeaturedVehiclesProps) {
           </Button>
         </div>
       )}
-
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredCars.slice(0, 6).map((car) => (
-          <CarCard
-            key={car.id}
-            car={car}
-            carTypeNames={(car.carTypeIds || []).map((id) => carTypeMap[id]).filter(Boolean)}
-            transmissionNames={(car.transmissionIds || []).map((id) => transmissionMap[id]).filter(Boolean)}
-            fuelTypeNames={(car.fuelTypeIds || []).map((id) => fuelTypeMap[id]).filter(Boolean)}
-            tagNames={(car.tagIds || []).map((id) => tagMap[id]).filter(Boolean)}
-            onClick={() => {
-              if (isClient && typeof window !== 'undefined') {
-                localStorage.setItem('previousPage', 'home');
-              }
-            }}
-          />
-        ))}
+        {sortedCars
+          .filter(car => filteredCars.includes(car))
+          .slice(0, carsToShow)
+          .map((car) => (
+            <CarCard
+              key={car.id}
+              car={car}
+              carTypeNames={(car.carTypeIds || []).map((id) => carTypeMap[id]).filter(Boolean)}
+              transmissionNames={(car.transmissionIds || []).map((id) => transmissionMap[id]).filter(Boolean)}
+              fuelTypeNames={(car.fuelTypeIds || []).map((id) => fuelTypeMap[id]).filter(Boolean)}
+              tagNames={(car.tagIds || []).map((id) => tagMap[id]).filter(Boolean)}
+              onClick={() => {
+                if (isClient && typeof window !== 'undefined') {
+                  localStorage.setItem('previousPage', 'home');
+                }
+              }}
+            />
+          ))}
       </div>
-      
       {filteredCars.length === 0 && hasActiveFilters && (
         <div className="text-center py-8">
           <p className="text-muted-foreground">No vehicles match your current filters.</p>
@@ -202,6 +222,14 @@ export function FeaturedVehicles({ cars, categories }: FeaturedVehiclesProps) {
             className="mt-4"
           >
             Clear Filters
+          </Button>
+        </div>
+      )}
+      {/* View All / Show Less Button */}
+      {(showViewAll || showShowLess) && (
+        <div className="flex justify-center mt-8">
+          <Button onClick={() => setShowAll(!showAll)}>
+            {showAll ? 'Show Less' : 'View All'}
           </Button>
         </div>
       )}

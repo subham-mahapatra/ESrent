@@ -22,21 +22,30 @@ const formatPrice = (dailyPrice: number | undefined | null) => {
   }) + '/day';
 };
 
-export function SearchBar() {
-  const router = useRouter();
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<AlgoliaCarResult[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const dropdownRef = useRef<HTMLFormElement>(null);
-  const searchCache = useRef<Record<string, AlgoliaCarResult[]>>({});
-  const debouncedQuery = useDebounce(query, 500);
+interface SearchBarProps {
+  value?: string;
+  onChange?: (value: string) => void;
+  placeholder?: string;
+}
+
+export function SearchBar({ value, onChange, placeholder }: SearchBarProps) {
+  // If value/onChange are provided, use them (controlled); otherwise, use internal state
+  const [internalValue, setInternalValue] = useState('');
+  const inputValue = value !== undefined ? value : internalValue;
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (onChange) {
+      onChange(e.target.value);
+    } else {
+      setInternalValue(e.target.value);
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowDropdown(false);
-      }
+      // This logic is no longer needed as the dropdown is removed
+      // if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      //   setShowDropdown(false);
+      // }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
@@ -45,22 +54,22 @@ export function SearchBar() {
 
   useEffect(() => {
     const searchCars = async () => {
-      const trimmedQuery = debouncedQuery.trim();
+      const trimmedQuery = inputValue.trim();
       
       if (!trimmedQuery) {
-        setResults([]);
-        setIsLoading(false);
+        // setResults([]); // No longer needed
+        // setIsLoading(false); // No longer needed
         return;
       }
 
       // Check cache first
-      if (searchCache.current[trimmedQuery]) {
-        setResults(searchCache.current[trimmedQuery]);
-        setIsLoading(false);
-        return;
-      }
+      // if (searchCache.current[trimmedQuery]) { // No longer needed
+      //   setResults(searchCache.current[trimmedQuery]);
+      //   setIsLoading(false);
+      //   return;
+      // }
 
-      setIsLoading(true);
+      // setIsLoading(true); // No longer needed
       try {
         // Get initial results from Algolia
         const searchResults: AlgoliaCarResult[] = []; // or mock data
@@ -92,87 +101,37 @@ export function SearchBar() {
         );
 
         // Cache the enhanced results
-        searchCache.current[trimmedQuery] = enhancedResults;
-        setResults(enhancedResults);
-        setShowDropdown(true);
+        // searchCache.current[trimmedQuery] = enhancedResults; // No longer needed
+        // setResults(enhancedResults); // No longer needed
+        // setShowDropdown(true); // No longer needed
       } catch (error) {
         console.error('Search error:', error);
-        setResults([]);
+        // setResults([]); // No longer needed
       } finally {
-        setIsLoading(false);
+        // setIsLoading(false); // No longer needed
       }
     };
 
     searchCars();
-  }, [debouncedQuery]);
+  }, [inputValue]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim()) {
-      router.push(`/search/results?q=${encodeURIComponent(query.trim())}`);
+    if (inputValue.trim()) {
+      // router.push(`/search/results?q=${encodeURIComponent(query.trim())}`); // No longer needed
     }
   };
 
   return (
     <div className="px-4 sm:px-6 pt-6 sm:pt-8 max-w-7xl mx-auto w-full">
-      <form onSubmit={handleSubmit} className="relative" ref={dropdownRef}>
+      <form className="relative">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search luxury vehicles"
+          placeholder={placeholder || "Search luxury vehicles"}
           className="pl-10 pr-4 h-10 md:h-12 bg-secondary/50 hover:bg-secondary/70 transition-colors rounded-full"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onFocus={() => query.trim() && setShowDropdown(true)}
+          value={inputValue}
+          onChange={handleInputChange}
         />
-        
-        {showDropdown && (query.trim() !== '') && (
-          <div className="absolute w-full mt-2 bg-white rounded-lg shadow-lg border border-gray-200 max-h-[70vh] overflow-y-auto z-50">
-            {isLoading ? (
-              <div className="p-4 text-center text-gray-500">Loading...</div>
-            ) : (
-              <>
-                {results.length > 0 ? (
-                  <>
-                    {results.slice(0, 5).map((car) => (
-                      <Link
-                        key={car.objectID || car.id}
-                        href={`/car/${car.objectID || car.id}`}
-                        className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors cursor-pointer"
-                      >
-                        {car.images?.[0] && (
-                          <div className="relative w-16 h-16">
-                            <Image
-                              src={car.images[0]}
-                              alt={car.name}
-                              fill
-                              className="object-cover rounded-md"
-                            />
-                          </div>
-                        )}
-                        <div>
-                          <h3 className="font-medium">{car.name || 'Unnamed Vehicle'}</h3>
-                          <p className="text-sm text-gray-500">
-                            {car.year || 'Year N/A'} • {formatPrice(car.dailyPrice)}
-                          </p>
-                        </div>
-                      </Link>
-                    ))}
-                    <Link
-                      href={`/search/results?q=${encodeURIComponent(query)}`}
-                      className="block p-4 text-center text-purple-600 hover:text-purple-700 hover:bg-gray-50 border-t font-medium"
-                    >
-                      See all {results.length} results
-                    </Link>
-                  </>
-                ) : (
-                  <div className="p-4 text-center text-gray-500">
-                    No results found
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        )}
       </form>
     </div>
   );

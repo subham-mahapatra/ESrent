@@ -19,22 +19,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Category } from '@/types/category';
 
 interface FilterModalProps {
   onFiltersChange: (filters: FilterValues) => void;
   shouldReset?: boolean;
+  categories: Category[];
 }
 
 export interface FilterValues {
   maxPrice: number;
-  transmission: string;
+  transmission?: string;
   types: string[];
   tags: string[];
 }
-
-const transmissionOptions = ["Automatic", "Manual"] as const;
-const carTypes = ["SUV", "Sedan", "Hatchback", "Coupe", "Convertible", "Wagon"] as const;
-const carTags = ["Luxury", "Sports", "Family", "Economy", "Off-Road", "Business"] as const;
 
 interface FilterState extends FilterValues {
   open: boolean;
@@ -95,7 +93,7 @@ function useDebounce<Args extends unknown[]>(
   );
 }
 
-const FilterModalComponent = memo(({ onFiltersChange, shouldReset }: FilterModalProps) => {
+const FilterModalComponent = memo(({ onFiltersChange, shouldReset, categories }: FilterModalProps) => {
   const [state, dispatch] = useReducer(filterReducer, initialState);
 
   useEffect(() => {
@@ -104,6 +102,10 @@ const FilterModalComponent = memo(({ onFiltersChange, shouldReset }: FilterModal
     }
   }, [shouldReset]);
 
+  // Dynamic options from categories
+  const carTypes = (categories ?? []).filter(c => c.type === 'carType');
+  const carTags = (categories ?? []).filter(c => c.type === 'tag');
+
   const debouncedPriceChange = useDebounce<[number]>((value: number) => {
     dispatch({ type: 'SET_MAX_PRICE', payload: value });
   }, 300);
@@ -111,10 +113,6 @@ const FilterModalComponent = memo(({ onFiltersChange, shouldReset }: FilterModal
   const handlePriceChange = useCallback((value: number[]) => {
     debouncedPriceChange(value[0]);
   }, [debouncedPriceChange]);
-
-  const handleTransmissionChange = useCallback((value: string) => {
-    dispatch({ type: 'SET_TRANSMISSION', payload: value });
-  }, []);
 
   const handleTypesChange = useCallback((value: string[]) => {
     dispatch({ type: 'SET_TYPES', payload: value });
@@ -125,8 +123,8 @@ const FilterModalComponent = memo(({ onFiltersChange, shouldReset }: FilterModal
   }, []);
 
   const handleApplyFilters = useCallback(() => {
-    const { maxPrice, transmission, types, tags } = state;
-    onFiltersChange({ maxPrice, transmission, types, tags });
+    const { maxPrice, types, tags } = state;
+    onFiltersChange({ maxPrice, types, tags });
     dispatch({ type: 'SET_OPEN', payload: false });
   }, [state, onFiltersChange]);
 
@@ -159,9 +157,9 @@ const FilterModalComponent = memo(({ onFiltersChange, shouldReset }: FilterModal
         <DialogHeader>
           <DialogTitle>Filter Vehicles</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-6 py-4">
           <div className="space-y-2">
-            <Label>Maximum Price (AED)</Label>
+            <Label className="text-base font-semibold">Maximum Price (AED)</Label>
             <Slider
               defaultValue={[state.maxPrice]}
               min={1000}
@@ -176,81 +174,61 @@ const FilterModalComponent = memo(({ onFiltersChange, shouldReset }: FilterModal
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>Transmission</Label>
-            <Select
-              value={state.transmission}
-              onValueChange={handleTransmissionChange}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select transmission" />
-              </SelectTrigger>
-              <SelectContent>
-                {transmissionOptions.map((option, index) => (
-                  <SelectItem 
-                    key={`transmission-${index}-${option}`} 
-                    value={option.toLowerCase()}
-                  >
-                    {option}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <hr className="my-2 border-t border-gray-200" />
 
           <div className="space-y-2">
-            <Label>Car Types</Label>
+            <Label className="text-base font-semibold">Car Types</Label>
             <div className="grid grid-cols-2 gap-2">
               {carTypes.map((type, index) => (
                 <Button
-                  key={`cartype-${index}-${type}`}
-                  variant={state.types.includes(type.toLowerCase()) ? "default" : "outline"}
+                  key={`cartype-${index}-${type.id}`}
+                  variant={state.types.includes(type.name.toLowerCase()) ? "default" : "outline"}
                   onClick={() => {
-                    const newTypes = state.types.includes(type.toLowerCase())
-                      ? state.types.filter((t) => t !== type.toLowerCase())
-                      : [...state.types, type.toLowerCase()];
+                    const newTypes = state.types.includes(type.name.toLowerCase())
+                      ? state.types.filter((t) => t !== type.name.toLowerCase())
+                      : [...state.types, type.name.toLowerCase()];
                     handleTypesChange(newTypes);
                   }}
-                  className={`
-                    ${state.types.includes(type.toLowerCase())
-                      ? 'bg-indigo-600 text-white'
-                      : 'hover:bg-indigo-50'
-                    }
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition-colors
+                    ${state.types.includes(type.name.toLowerCase())
+                      ? 'bg-indigo-600 text-white shadow hover:bg-indigo-700'
+                      : 'border border-gray-300 bg-white text-gray-800 hover:bg-indigo-100 hover:text-indigo-700'}
                   `}
                 >
-                  {type}
+                  {type.name}
                 </Button>
               ))}
             </div>
           </div>
 
+          <hr className="my-2 border-t border-gray-200" />
+
           <div className="space-y-2">
-            <Label>Features</Label>
-            <div className="grid grid-cols-2 gap-2">
+            <Label className="text-base font-semibold">Features</Label>
+            <div className="grid grid-cols-3 gap-2">
               {carTags.map((tag, index) => (
                 <Button
-                  key={`tag-${index}-${tag}`}
-                  variant={state.tags.includes(tag.toLowerCase()) ? "default" : "outline"}
+                  key={`tag-${index}-${tag.id}`}
+                  variant={state.tags.includes(tag.name.toLowerCase()) ? "default" : "outline"}
                   onClick={() => {
-                    const newTags = state.tags.includes(tag.toLowerCase())
-                      ? state.tags.filter((t) => t !== tag.toLowerCase())
-                      : [...state.tags, tag.toLowerCase()];
+                    const newTags = state.tags.includes(tag.name.toLowerCase())
+                      ? state.tags.filter((t) => t !== tag.name.toLowerCase())
+                      : [...state.tags, tag.name.toLowerCase()];
                     handleTagsChange(newTags);
                   }}
-                  className={`
-                    ${state.tags.includes(tag.toLowerCase())
-                      ? 'bg-indigo-600 text-white'
-                      : 'hover:bg-indigo-50'
-                    }
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition-colors
+                    ${state.tags.includes(tag.name.toLowerCase())
+                      ? 'bg-indigo-600 text-white shadow hover:bg-indigo-700'
+                      : 'border border-gray-300 bg-white text-gray-800 hover:bg-indigo-100 hover:text-indigo-700'}
                   `}
                 >
-                  {tag}
+                  {tag.name}
                 </Button>
               ))}
             </div>
           </div>
         </div>
-        <DialogFooter className="gap-2">
+        <DialogFooter className="gap-2 mt-4">
           <Button
             variant="outline"
             onClick={handleReset}
@@ -259,7 +237,7 @@ const FilterModalComponent = memo(({ onFiltersChange, shouldReset }: FilterModal
           </Button>
           <Button
             onClick={handleApplyFilters}
-            className="bg-indigo-600"
+            className="bg-indigo-600 text-white font-semibold px-6 py-2 rounded-lg shadow hover:bg-indigo-700 transition-colors"
           >
             Apply Filters
           </Button>

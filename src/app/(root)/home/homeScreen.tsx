@@ -64,9 +64,9 @@ import { useCars, useBrands, useCategories } from '@/hooks/useApi';
 
 function FeaturedContent() {
   // Memoize the API parameters to prevent unnecessary re-renders
-  const carsParams = useMemo(() => ({ featured: true, limit: 6 }), []);
+  const carsParams = useMemo(() => ({ limit: 1000 }), []); // fetch all cars (featured and non-featured)
   const brandsParams = useMemo(() => ({ featured: true, limit: 10 }), []);
-  const categoriesParams = useMemo(() => ({ featured: true, limit: 10 }), []);
+  const categoriesParams = useMemo(() => ({}), []);
 
   // Use API hooks for data fetching with caching
   const { 

@@ -31,6 +31,7 @@ export default function CarsPage() {
   // Car hire state
   const [pickupDate, setPickupDate] = useState('')
   const [dropoffDate, setDropoffDate] = useState('')
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Initialize dates on client side only
   useEffect(() => {
@@ -99,9 +100,38 @@ export default function CarsPage() {
     if (carsData?.data) {
       const allCars: Car[] = carsData.data as unknown as Car[];
       setCars(allCars);
-      setFilteredCars(allCars);
+      setLoading(false);
     }
   }, [carsData]);
+
+  // Filter cars by search query and filters
+  useEffect(() => {
+    let filtered = [...cars];
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      filtered = filtered.filter(car =>
+        car.name?.toLowerCase().includes(q) ||
+        car.brand?.toLowerCase().includes(q) ||
+        car.model?.toLowerCase().includes(q)
+      );
+    }
+    // Apply other filters (types, tags, price, etc) as before
+    if (selectedFilters.types.length > 0) {
+      filtered = filtered.filter(car =>
+        Array.isArray(car.carTypeIds) && car.carTypeIds.some(id => selectedFilters.types.includes(carTypeMap[id]?.toLowerCase()))
+      );
+    }
+    if (selectedFilters.tags.length > 0) {
+      filtered = filtered.filter(car =>
+        Array.isArray(car.tagIds) && car.tagIds.some(id => selectedFilters.tags.includes(tagMap[id]?.toLowerCase()))
+      );
+    }
+    if (selectedFilters.maxPrice < 10000) {
+      filtered = filtered.filter(car => car.dailyPrice <= selectedFilters.maxPrice);
+    }
+    setFilteredCars(filtered);
+    setCurrentPage(1); // Reset to first page on search/filter
+  }, [cars, searchQuery, selectedFilters, carTypeMap, tagMap]);
 
   // Update loading state
   useEffect(() => {
@@ -167,7 +197,7 @@ export default function CarsPage() {
     <div className="flex flex-col min-h-screen  max-w-7xl mx-auto w-full">
       <Header />
       <div className="container mx-auto px-4 py-8">
-        <SearchBar />
+        <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search cars by name, brand, model..." />
         {/* Range Picker UI like home screen */}
         <HydrationSafe>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-4 w-full max-w-2xl">
@@ -223,6 +253,7 @@ export default function CarsPage() {
             <FilterModal 
               onFiltersChange={handleFiltersChange} 
               shouldReset={shouldResetFilters} 
+              categories={categories as any as import('@/types/category').Category[]}
             />
           </div>
         </div>
@@ -261,7 +292,7 @@ export default function CarsPage() {
 
         {/* Cars Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {paginatedCars.map((car) => (
+          {filteredCars.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((car) => (
             <CarCard
               key={car.id}
               brandName={car.brand}
@@ -276,7 +307,7 @@ export default function CarsPage() {
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && (
+        {Math.ceil(filteredCars.length / ITEMS_PER_PAGE) > 1 && (
           <div className="flex justify-center items-center gap-2 mt-8">
             <Button
               variant="outline"
@@ -285,7 +316,7 @@ export default function CarsPage() {
             >
               Previous
             </Button>
-            {[...Array(totalPages)].map((_, i) => (
+            {[...Array(Math.ceil(filteredCars.length / ITEMS_PER_PAGE))].map((_, i) => (
               <Button
                 key={i + 1}
                 variant={currentPage === i + 1 ? "default" : "outline"}
@@ -296,8 +327,8 @@ export default function CarsPage() {
             ))}
             <Button
               variant="outline"
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(prev => Math.min(Math.ceil(filteredCars.length / ITEMS_PER_PAGE), prev + 1))}
+              disabled={currentPage === Math.ceil(filteredCars.length / ITEMS_PER_PAGE)}
             >
               Next
             </Button>

@@ -13,7 +13,6 @@ import { SearchBar } from '../home/components/SearchBar';
 interface CategoryFilterValues {
   types: string[];
   features: string[];
-  fuelTypes: string[];
 }
 
 interface CategoryWithCarCount extends Category {
@@ -27,8 +26,9 @@ export default function CategoriesPage() {
   const [selectedFilters, setSelectedFilters] = useState<CategoryFilterValues>({
     types: [],
     features: [],
-    fuelTypes: [],
   });
+
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const loadCategoriesWithCarCount = async () => {
@@ -76,56 +76,41 @@ export default function CategoriesPage() {
       };
       
       // Apply filters
-      const filtered = applyFilters(categories, updatedFilters);
+      const filtered = applyFilters(categories, updatedFilters, searchQuery);
       setFilteredCategories(filtered);
       
       return updatedFilters;
     });
   };
 
-  const applyFilters = (allCategories: CategoryWithCarCount[], filters: CategoryFilterValues) => {
-    // If no filters are selected, return all categories
-    if (
-      filters.types.length === 0 &&
-      filters.features.length === 0 &&
-      filters.fuelTypes.length === 0
-    ) {
-      return allCategories;
+  const applyFilters = (allCategories: CategoryWithCarCount[], filters: CategoryFilterValues, search: string) => {
+    let filtered = allCategories;
+    // Search filter
+    if (search && search.trim()) {
+      const q = search.trim().toLowerCase();
+      filtered = filtered.filter(cat =>
+        cat.name.toLowerCase().includes(q) ||
+        cat.slug.toLowerCase().includes(q)
+      );
     }
-
-    return allCategories.filter(category => {
-      // Check if we have active filters for this category type
+    // If no filters are selected, return all (after search)
+    if (filters.types.length === 0 && filters.features.length === 0) {
+      return filtered;
+    }
+    return filtered.filter(category => {
       const hasActiveTypeFilters = filters.types.length > 0;
-      const hasActiveFuelTypeFilters = filters.fuelTypes.length > 0;
       const hasActiveFeatureFilters = filters.features.length > 0;
-      
-      // If we have active filters for a category type, only show categories of that type
-      // that match the selected filters
       switch (category.type) {
         case 'carType':
-          // If car type filters are active, only show car types that are selected
           if (hasActiveTypeFilters) {
             return filters.types.includes(category.slug);
           }
-          // If other filters are active but not car type filters, hide car types
-          return !hasActiveFuelTypeFilters && !hasActiveFeatureFilters;
-          
-        case 'fuelType':
-          // If fuel type filters are active, only show fuel types that are selected
-          if (hasActiveFuelTypeFilters) {
-            return filters.fuelTypes.includes(category.slug);
-          }
-          // If other filters are active but not fuel type filters, hide fuel types
-          return !hasActiveTypeFilters && !hasActiveFeatureFilters;
-          
+          return !hasActiveFeatureFilters;
         case 'tag':
-          // If feature filters are active, only show features that are selected
           if (hasActiveFeatureFilters) {
             return filters.features.includes(category.slug);
           }
-          // If other filters are active but not feature filters, hide features
-          return !hasActiveTypeFilters && !hasActiveFuelTypeFilters;
-          
+          return !hasActiveTypeFilters;
         default:
           return false;
       }
@@ -136,19 +121,22 @@ export default function CategoriesPage() {
     setSelectedFilters({
       types: [],
       features: [],
-      fuelTypes: [],
     });
+    setSearchQuery('');
     setFilteredCategories(categories);
   };
 
   const hasActiveFilters = selectedFilters.types.length > 0 || 
-    selectedFilters.features.length > 0 || 
-    selectedFilters.fuelTypes.length > 0;
+    selectedFilters.features.length > 0;
 
   // Group categories by type for filter buttons
   const carTypes = categories.filter(cat => cat.type === 'carType');
-  const fuelTypes = categories.filter(cat => cat.type === 'fuelType');
   const features = categories.filter(cat => cat.type === 'tag');
+
+  // Add effect to update filteredCategories when searchQuery changes
+  useEffect(() => {
+    setFilteredCategories(applyFilters(categories, selectedFilters, searchQuery));
+  }, [searchQuery, categories, selectedFilters]);
 
   if (loading) {
     return (
@@ -170,7 +158,7 @@ export default function CategoriesPage() {
       <Header />
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <SearchBar />
+          <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search categories by name or slug..." />
         </div>
         <div className="flex justify-between items-center mb-6">
           <h1 className="heading-4 font-semibold">All Categories</h1>
@@ -201,21 +189,6 @@ export default function CategoriesPage() {
                   key={type.id}
                   variant={selectedFilters.types.includes(type.slug) ? "default" : "outline"}
                   onClick={() => handleFilterChange('types', type.slug)}
-                >
-                  {type.name} ({type.realCarCount})
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <h2 className="text-lg font-medium">Fuel Types</h2>
-            <div className="flex flex-wrap gap-2">
-              {fuelTypes.map((type) => (
-                <Button
-                  key={type.id}
-                  variant={selectedFilters.fuelTypes.includes(type.slug) ? "default" : "outline"}
-                  onClick={() => handleFilterChange('fuelTypes', type.slug)}
                 >
                   {type.name} ({type.realCarCount})
                 </Button>
@@ -264,26 +237,6 @@ export default function CategoriesPage() {
                     <span>{category?.name || type}</span>
                     <button 
                       onClick={() => handleFilterChange('types', type)}
-                      className="ml-1 text-primary/70 hover:text-primary"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                      </svg>
-                    </button>
-                  </span>
-                );
-              })}
-              {selectedFilters.fuelTypes.map((type, index) => {
-                const category = fuelTypes.find(c => c.slug === type);
-                return (
-                  <span
-                    key={`active-fuel-${index}-${type}`}
-                    className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium flex items-center gap-1"
-                  >
-                    <span>{category?.name || type}</span>
-                    <button 
-                      onClick={() => handleFilterChange('fuelTypes', type)}
                       className="ml-1 text-primary/70 hover:text-primary"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
