@@ -20,6 +20,7 @@ const durations = [
 
 export function HeroSection() {
   const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
+  const [returnDate, setReturnDate] = useState<string>(format(new Date(Date.now() + 24 * 60 * 60 * 1000), 'yyyy-MM-dd'));
   const [selectedDuration, setSelectedDuration] = useState<string>("daily");
   const [selectedType, setSelectedType] = useState<string>("");
   const [categories, setCategories] = useState<CategoryWithCarCount[]>([]);
@@ -61,7 +62,8 @@ export function HeroSection() {
   const handleSearch = () => {
     const message = `Hi, I'm interested in renting a car with the following preferences:
 Location: Dubai
-Date: ${format(new Date(selectedDate), 'dd/MM/yyyy')}
+-Pickup Date: ${format(new Date(selectedDate), 'dd/MM/yyyy')}
+Return Date: ${format(new Date(returnDate), 'dd/MM/yyyy')}
 Duration: ${selectedDuration}
 ${selectedType ? `Car Type: ${selectedType}` : ''}`;
 
@@ -102,7 +104,7 @@ ${selectedType ? `Car Type: ${selectedType}` : ''}`;
 
         {/* Search Form */}
         <div className="w-full max-w-4xl bg-black/30 backdrop-blur-sm p-8 rounded-2xl">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Location */}
             <div className="space-y-2">
               <label className="text-white text-sm font-medium">Pickup car at</label>
@@ -114,9 +116,9 @@ ${selectedType ? `Car Type: ${selectedType}` : ''}`;
               />
             </div>
 
-            {/* Date */}
+            {/* Pickup Date */}
             <div className="space-y-2">
-              <label className="text-white text-sm font-medium">From</label>
+              <label className="text-white text-sm font-medium">Pickup Date</label>
               <div className="relative">
                 <input
                   type="date"
@@ -129,6 +131,23 @@ ${selectedType ? `Car Type: ${selectedType}` : ''}`;
               </div>
             </div>
 
+            {/* Return Date */}
+            <div className="space-y-2">
+              <label className="text-white text-sm font-medium">Return Date</label>
+              <div className="relative">
+                <input
+                  type="date"
+                  value={returnDate}
+                  onChange={(e) => setReturnDate(e.target.value)}
+                  min={selectedDate}
+                  className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white appearance-none"
+                />
+                <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 pointer-events-none" size={20} />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             {/* Car Type */}
             <div className="space-y-2">
               <label className="text-white text-sm font-medium">Car type</label>

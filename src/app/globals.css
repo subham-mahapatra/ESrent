@@ -97,6 +97,135 @@ input[type="date"] {
   src: url('../../public/fonts/Agrandir-TextBold.otf') format('opentype');
 }
 
+/* TipTap Editor Custom Styling */
+.ProseMirror {
+  outline: none !important;
+  border: none !important;
+  background: transparent !important;
+  font-family: inherit !important;
+  font-size: inherit !important;
+  line-height: inherit !important;
+  color: inherit !important;
+}
+
+.ProseMirror p {
+  margin: 0.5em 0 !important;
+}
+
+.ProseMirror p:first-child {
+  margin-top: 0 !important;
+}
+
+.ProseMirror p:last-child {
+  margin-bottom: 0 !important;
+}
+
+.ProseMirror ul,
+.ProseMirror ol {
+  margin: 0.5em 0 !important;
+  padding-left: 1.5em !important;
+}
+
+.ProseMirror li {
+  margin: 0.25em 0 !important;
+}
+
+.ProseMirror a {
+  color: hsl(var(--primary)) !important;
+  text-decoration: underline !important;
+}
+
+.ProseMirror strong {
+  font-weight: 600 !important;
+}
+
+.ProseMirror em {
+  font-style: italic !important;
+}
+
+.ProseMirror u {
+  text-decoration: underline !important;
+}
+
+.ProseMirror h1 {
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  margin: 0.75em 0 0.5em 0 !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.ProseMirror h2 {
+  font-size: 1.25rem !important;
+  font-weight: 600 !important;
+  margin: 0.5em 0 0.25em 0 !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.ProseMirror h3 {
+  font-size: 1.125rem !important;
+  font-weight: 600 !important;
+  margin: 0.25em 0 0.125em 0 !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.ProseMirror h1:first-child,
+.ProseMirror h2:first-child,
+.ProseMirror h3:first-child {
+  margin-top: 0 !important;
+}
+
+/* Car Description HTML Content Styling */
+.prose-invert {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.prose-invert h1,
+.prose-invert h2,
+.prose-invert h3 {
+  color: hsl(var(--foreground)) !important;
+  margin-top: 1.5em !important;
+  margin-bottom: 0.5em !important;
+}
+
+.prose-invert h1:first-child,
+.prose-invert h2:first-child,
+.prose-invert h3:first-child {
+  margin-top: 0 !important;
+}
+
+.prose-invert p {
+  margin: 0.75em 0 !important;
+  line-height: 1.6 !important;
+}
+
+.prose-invert ul,
+.prose-invert ol {
+  margin: 0.75em 0 !important;
+  padding-left: 1.5em !important;
+}
+
+.prose-invert li {
+  margin: 0.25em 0 !important;
+}
+
+.prose-invert a {
+  color: hsl(var(--primary)) !important;
+  text-decoration: underline !important;
+}
+
+.prose-invert strong {
+  font-weight: 600 !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.prose-invert em {
+  font-style: italic !important;
+}
+
+.prose-invert u {
+  text-decoration: underline !important;
+}
+
 @font-face {
   font-family: 'ClashGrotesk';
   font-weight: 500,600,700;

@@ -62,7 +62,7 @@ export function CarCard({ car, onClick, linkHref, carTypeNames = [], transmissio
           />
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
-          <div className="absolute bottom-0 w-full p-5 space-y-3">
+          <div className="absolute bottom-0 w-full p-5 space-y-1">
             <h3 className="text-heading-3 text-white">{carName}</h3>
             <div className="flex items-center gap-2 text-sm text-white/70">
               {carBrand && <span>{carBrand}</span>}

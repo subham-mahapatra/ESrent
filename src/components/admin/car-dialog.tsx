@@ -18,7 +18,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { uploadImage } from '@/lib/cloudinary';
-import { Image as ImageIcon, X, Loader2 } from 'lucide-react';
+import { Image as ImageIcon, X, Loader2, Bold, Italic, Underline, List, ListOrdered, Link as LinkIcon, AlignLeft, AlignCenter, AlignRight, ChevronDown } from 'lucide-react';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import LinkExtension from '@tiptap/extension-link';
+import TextAlign from '@tiptap/extension-text-align';
+import Placeholder from '@tiptap/extension-placeholder';
 import Image from 'next/image';
 import { useBrands, useCategories } from '@/hooks/useApi';
 import { Category } from '@/types/category';
@@ -48,13 +53,15 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
   const [formData, setFormData] = useState<Partial<Car>>(car || defaultCar);
   const [uploading, setUploading] = useState(false);
   const [previewImages, setPreviewImages] = useState<string[]>(car?.images || []);
+  const [coverImageIndex, setCoverImageIndex] = useState<number>(0);
   const [tagsInput, setTagsInput] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-
+  
   useEffect(() => {
     // Reset form data and preview images when car prop changes
     setFormData(car || defaultCar);
     setPreviewImages(car?.images || []);
+    setCoverImageIndex(0); // Reset cover image to first image
     setTagsInput(car?.tags ? car.tags.join(', ') : '');
   }, [car]);
 
@@ -132,6 +139,51 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
       ...prev,
       images: (prev.images || []).filter((_, i) => i !== index)
     }));
+    // Adjust cover image index if the removed image was before it
+    if (index < coverImageIndex) {
+      setCoverImageIndex(prev => prev - 1);
+    } else if (index === coverImageIndex) {
+      setCoverImageIndex(0); // Reset to first image if cover was removed
+    }
+  };
+
+  const setCoverImage = (index: number) => {
+    // Move the selected image to the first position
+    const newImages = [...previewImages];
+    const [selectedImage] = newImages.splice(index, 1);
+    newImages.unshift(selectedImage);
+    setPreviewImages(newImages);
+    
+    // Update form data images
+    const newFormImages = [...(formData.images || [])];
+    const [selectedFormImage] = newFormImages.splice(index, 1);
+    newFormImages.unshift(selectedFormImage);
+    setFormData(prev => ({ ...prev, images: newFormImages }));
+    
+    // Set cover image index to 0 (first position)
+    setCoverImageIndex(0);
+  };
+
+  const moveImage = (fromIndex: number, toIndex: number) => {
+    const newImages = [...previewImages];
+    const [movedImage] = newImages.splice(fromIndex, 1);
+    newImages.splice(toIndex, 0, movedImage);
+    setPreviewImages(newImages);
+    
+    // Update form data images
+    const newFormImages = [...(formData.images || [])];
+    const [movedFormImage] = newFormImages.splice(fromIndex, 1);
+    newFormImages.splice(toIndex, 0, movedFormImage);
+    setFormData(prev => ({ ...prev, images: newFormImages }));
+    
+    // Adjust cover image index
+    if (fromIndex === coverImageIndex) {
+      setCoverImageIndex(toIndex);
+    } else if (fromIndex < coverImageIndex && toIndex >= coverImageIndex) {
+      setCoverImageIndex(prev => prev - 1);
+    } else if (fromIndex > coverImageIndex && toIndex <= coverImageIndex) {
+      setCoverImageIndex(prev => prev + 1);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -203,6 +255,32 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
     
     await onSave(carData);
   };
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      LinkExtension.configure({
+        openOnClick: false,
+      }),
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+      }),
+      Placeholder.configure({
+        placeholder: 'Enter car description... Use the toolbar above to format your text.',
+      }),
+    ],
+    content: formData.description || '',
+    onUpdate: ({ editor }) => {
+      setFormData(prev => ({ ...prev, description: editor.getHTML() }));
+    },
+    immediatelyRender: false,
+  });
+
+  useEffect(() => {
+    if (editor && car?.description !== formData.description) {
+      editor.commands.setContent(car?.description || '');
+    }
+  }, [editor, car?.description]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -457,72 +535,346 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
 
           {/* Images */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-card-foreground">Images</h3>
-            <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-card-foreground">Car Images</h3>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 bg-primary rounded-full"></span>
+                  Cover Image
+                </span>
+              </div>
+            </div>
+            
+            {/* Upload Section */}
+            <div className="border-2 border-dashed border-muted-foreground/20 rounded-lg p-6 bg-muted/20">
               <div className="flex items-center gap-4">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading}
+                  className="flex items-center gap-2"
                 >
                   {uploading ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <Loader2 className="w-4 h-4 animate-spin" />
                       Uploading...
                     </>
                   ) : (
                     <>
-                      <ImageIcon className="w-4 h-4 mr-2" />
+                      <ImageIcon className="w-4 h-4" />
                       Add Images
                     </>
                   )}
                 </Button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={handleImageUpload}
-                  disabled={uploading}
-                />
+                <div className="text-sm text-muted-foreground">
+                  {previewImages.length === 0 ? (
+                    <span>No images uploaded yet</span>
+                  ) : (
+                    <span>{previewImages.length} image{previewImages.length !== 1 ? 's' : ''} uploaded</span>
+                  )}
+                </div>
               </div>
-              
-              {/* Image Preview Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {previewImages.map((url, index) => (
-                  <div key={url} className="relative group aspect-video">
-                    <Image
-                      src={url}
-                      alt={`Car image ${index + 1}`}
-                      fill
-                      className="object-cover rounded-lg"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(index)}
-                      className="absolute top-2 right-2 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handleImageUpload}
+                disabled={uploading}
+              />
             </div>
+
+            {/* Image Gallery */}
+            {previewImages.length > 0 && (
+              <div className="space-y-4">
+                {/* Gallery Header */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 border border-primary/20 rounded-full">
+                      <span className="w-2 h-2 bg-primary rounded-full"></span>
+                      <span className="text-sm font-medium text-primary">Cover: Image {coverImageIndex + 1}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      {previewImages.length} total
+                    </span>
+                  </div>
+                </div>
+
+                {/* Image Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                  {previewImages.map((url, index) => (
+                    <div 
+                      key={`${url}-${index}`} 
+                      className={`relative group aspect-[4/3] rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                        index === coverImageIndex 
+                          ? 'border-primary shadow-lg shadow-primary/20' 
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                    >
+                      {/* Cover Badge */}
+                      {index === coverImageIndex && (
+                        <div className="absolute top-3 left-3 z-20 bg-primary text-primary-foreground px-3 py-1.5 rounded-full text-sm font-semibold shadow-lg">
+                          <span className="flex items-center gap-1">
+                            <span>⭐</span>
+                            Cover
+                          </span>
+                        </div>
+                      )}
+                      
+                      {/* Image */}
+                      <Image
+                        src={url}
+                        alt={`Car image ${index + 1}`}
+                        fill
+                        className="object-cover transition-transform duration-200 group-hover:scale-105"
+                      />
+                      
+                      {/* Overlay Actions */}
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-200 flex flex-col justify-between p-4">
+                        {/* Top Actions */}
+                        <div className="flex items-center justify-between">
+                          <div className="bg-black/50 text-white text-sm px-3 py-1.5 rounded-full font-medium">
+                            #{index + 1}
+                          </div>
+                          <Button
+                            type="button"
+                            size="default"
+                            variant="destructive"
+                            onClick={() => removeImage(index)}
+                            className="h-8 w-8 p-0 rounded-full"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        
+                        {/* Bottom Actions */}
+                        <div className="flex flex-col gap-3">
+                          {/* Set as Cover Button */}
+                          {index !== coverImageIndex && (
+                            <Button
+                              type="button"
+                              size="default"
+                              variant="secondary"
+                              onClick={() => setCoverImage(index)}
+                              className="w-full text-sm bg-white/90 text-black hover:bg-white font-medium"
+                            >
+                              Set as Cover
+                            </Button>
+                          )}
+                          
+                          {/* Move Buttons */}
+                          <div className="flex gap-2">
+                            {index > 0 && (
+                              <Button
+                                type="button"
+                                size="default"
+                                variant="outline"
+                                onClick={() => moveImage(index, index - 1)}
+                                className="flex-1 h-8 text-sm bg-black/50 border-white/20 text-white hover:bg-black/70 font-medium"
+                              >
+                                ↑
+                              </Button>
+                            )}
+                            {index < previewImages.length - 1 && (
+                              <Button
+                                type="button"
+                                size="default"
+                                variant="outline"
+                                onClick={() => moveImage(index, index + 1)}
+                                className="flex-1 h-8 text-sm bg-black/50 border-white/20 text-white hover:bg-black/70 font-medium"
+                              >
+                                ↓
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Help Text */}
+                <div className="bg-muted/30 rounded-lg p-4 space-y-2">
+                  <h4 className="text-sm font-medium text-card-foreground">Image Management Tips:</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-muted-foreground">
+                    <div className="flex items-start gap-2">
+                      <span className="w-1.5 h-1.5 bg-primary rounded-full mt-1.5 flex-shrink-0"></span>
+                      <span><strong>Cover Image:</strong> The first image customers see</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="w-1.5 h-1.5 bg-primary rounded-full mt-1.5 flex-shrink-0"></span>
+                      <span><strong>Reorder:</strong> Use ↑↓ buttons to change order</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="w-1.5 h-1.5 bg-primary rounded-full mt-1.5 flex-shrink-0"></span>
+                      <span><strong>Quality:</strong> Upload high-resolution images</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Description */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-card-foreground">Description</h3>
             <div className="space-y-2">
-              <Label htmlFor="description" className="text-card-foreground">Car Description</Label>
-              <Textarea
-                id="description"
-                value={formData.description || ''}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="h-32"
-              />
+              {/* TipTap Editor Toolbar */}
+              <div className="border border-input rounded-t-md p-2 bg-muted/50 flex flex-wrap gap-1">
+                {/* Text Size Dropdown */}
+                <Select
+                  onValueChange={(value) => {
+                    if (value === 'h1') {
+                      editor?.chain().focus().toggleHeading({ level: 1 }).run();
+                    } else if (value === 'h2') {
+                      editor?.chain().focus().toggleHeading({ level: 2 }).run();
+                    } else if (value === 'h3') {
+                      editor?.chain().focus().toggleHeading({ level: 3 }).run();
+                    } else if (value === 'p') {
+                      editor?.chain().focus().setParagraph().run();
+                    }
+                  }}
+                >
+                  <SelectTrigger className="h-8 w-20 text-xs">
+                    <SelectValue placeholder="Size" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="h1">H1</SelectItem>
+                    <SelectItem value="h2">H2</SelectItem>
+                    <SelectItem value="h3">H3</SelectItem>
+                    <SelectItem value="p">Text</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="w-px h-6 bg-border mx-1" />
+                <Button
+                  type="button"
+                  variant={editor?.isActive('bold') ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => editor?.chain().focus().toggleBold().run()}
+                  className="h-8 w-8 p-0"
+                  title="Bold"
+                >
+                  <Bold className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant={editor?.isActive('italic') ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => editor?.chain().focus().toggleItalic().run()}
+                  className="h-8 w-8 p-0"
+                  title="Italic"
+                >
+                  <Italic className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant={editor?.isActive('underline') ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => editor?.chain().focus().toggleUnderline().run()}
+                  className="h-8 w-8 p-0"
+                  title="Underline"
+                >
+                  <Underline className="h-4 w-4" />
+                </Button>
+                <div className="w-px h-6 bg-border mx-1" />
+                <Button
+                  type="button"
+                  variant={editor?.isActive('bulletList') ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => editor?.chain().focus().toggleBulletList().run()}
+                  className="h-8 w-8 p-0"
+                  title="Bullet List"
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant={editor?.isActive('orderedList') ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => editor?.chain().focus().toggleOrderedList().run()}
+                  className="h-8 w-8 p-0"
+                  title="Numbered List"
+                >
+                  <ListOrdered className="h-4 w-4" />
+                </Button>
+                <div className="w-px h-6 bg-border mx-1" />
+                <Button
+                  type="button"
+                  variant={editor?.isActive('link') ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => {
+                    const url = prompt('Enter URL:');
+                    if (url) {
+                      editor?.chain().focus().setLink({ href: url }).run();
+                    }
+                  }}
+                  className="h-8 w-8 p-0"
+                  title="Insert Link"
+                >
+                  <LinkIcon className="h-4 w-4" />
+                </Button>
+                <div className="w-px h-6 bg-border mx-1" />
+                <Button
+                  type="button"
+                  variant={editor?.isActive({ textAlign: 'left' }) ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => editor?.chain().focus().setTextAlign('left').run()}
+                  className="h-8 w-8 p-0"
+                  title="Align Left"
+                >
+                  <AlignLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant={editor?.isActive({ textAlign: 'center' }) ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => editor?.chain().focus().setTextAlign('center').run()}
+                  className="h-8 w-8 p-0"
+                  title="Align Center"
+                >
+                  <AlignCenter className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant={editor?.isActive({ textAlign: 'right' }) ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => editor?.chain().focus().setTextAlign('right').run()}
+                  className="h-8 w-8 p-0"
+                  title="Align Right"
+                >
+                  <AlignRight className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {/* TipTap Editor Content */}
+              <div className="border border-input rounded-b-md bg-background">
+                <EditorContent 
+                  editor={editor} 
+                  className="min-h-[128px] max-h-[300px] overflow-y-auto p-3 focus:outline-none"
+                  style={{
+                    '--tw-prose-body': 'inherit',
+                    '--tw-prose-headings': 'inherit',
+                    '--tw-prose-links': 'inherit',
+                    '--tw-prose-bold': 'inherit',
+                    '--tw-prose-counters': 'inherit',
+                    '--tw-prose-bullets': 'inherit',
+                    '--tw-prose-hr': 'inherit',
+                    '--tw-prose-quotes': 'inherit',
+                    '--tw-prose-quote-borders': 'inherit',
+                    '--tw-prose-captions': 'inherit',
+                    '--tw-prose-code': 'inherit',
+                    '--tw-prose-pre-code': 'inherit',
+                    '--tw-prose-pre-bg': 'inherit',
+                    '--tw-prose-th-borders': 'inherit',
+                    '--tw-prose-td-borders': 'inherit',
+                  } as React.CSSProperties}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Use the toolbar above to format your text. The content will be saved as HTML.
+              </p>
             </div>
           </div>
 

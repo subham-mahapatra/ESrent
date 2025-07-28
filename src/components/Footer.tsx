@@ -39,7 +39,7 @@ const Footer = () => {
               <a href="https://snapchat.com/t/JyDBbZS1" target="_blank" rel="noopener noreferrer" aria-label="Snapchat">
                 <SiSnapchat size={22} className="text-white" />
               </a>
-              <a href="https://www.instagram.com/elite.slk?igsh=ZjNzZ2Y2dWJ1Z2Y2" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+              <a href="https://www.instagram.com/esrent.ae/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
                 <Instagram size={22} className="text-white" />
               </a>
               <a href="mailto:info@esrent.com" aria-label="Email">

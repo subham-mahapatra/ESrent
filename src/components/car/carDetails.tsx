@@ -475,9 +475,10 @@ export default function CarDetails() {
         {car.description && (
           <div className="mt-12 w-full max-w-7xl mx-auto px-4">
             <h3 className="text-2xl font-semibold text-white mb-3">Description</h3>
-            <p className="text-gray-300 leading-relaxed text-lg rounded-xl p-6 border border-gray-700 shadow-md">
-              {car.description}
-            </p>
+            <div 
+              className="text-gray-300 leading-relaxed text-lg rounded-xl p-6 border border-gray-700 shadow-md prose prose-invert max-w-none"
+              dangerouslySetInnerHTML={{ __html: car.description }}
+            />
           </div>
         )}
       </div>
