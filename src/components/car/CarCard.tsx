@@ -35,7 +35,9 @@ export function CarCard({ car, onClick, linkHref, carTypeNames = [], transmissio
   const carType = carTypeNames[0] || '';
   const carTransmission = transmissionNames[0] || '';
   const carFuel = fuelTypeNames[0] || '';
-  const carPrice = car.dailyPrice || 0;
+  const carPrice = car.discountedPrice || car.originalPrice || 0;
+  const carOriginalPrice = car.originalPrice || 0;
+  const hasDiscount = car.discountedPrice && car.discountedPrice < car.originalPrice;
   const carBrand = car.brand || '';
 
   const handleWhatsAppClick = (e: React.MouseEvent) => {
@@ -80,7 +82,14 @@ export function CarCard({ car, onClick, linkHref, carTypeNames = [], transmissio
             )}
             <div className="flex items-center justify-between pt-2">
               <div className="flex items-baseline gap-1">
-                <span className="text-primary text-heading-3">AED {carPrice.toLocaleString()}</span>
+                {hasDiscount ? (
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-primary text-heading-3">AED {carPrice.toLocaleString()}</span>
+                    <span className="text-white/60 text-sm line-through">AED {carOriginalPrice.toLocaleString()}</span>
+                  </div>
+                ) : (
+                  <span className="text-primary text-heading-3">AED {carPrice.toLocaleString()}</span>
+                )}
                 <span className="text-white/60 text-sm">/day</span>
               </div>
               <button

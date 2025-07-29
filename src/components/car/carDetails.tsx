@@ -32,7 +32,8 @@ interface CarDetailsInterface {
   images: string[]
   available: boolean
   name: string
-  dailyPrice: number
+  originalPrice: number
+  discountedPrice?: number
   year: number
   transmission?: string
   seater?: number
@@ -137,12 +138,13 @@ export default function CarDetails() {
   }
 
   const calculateTotal = () => {
-    if (!pickupDate || !returnDate || !car?.dailyPrice) return 0
+    const effectivePrice = car?.discountedPrice || car?.originalPrice || 0
+    if (!pickupDate || !returnDate || !effectivePrice) return 0
     const start = parseISO(pickupDate)
     const end = parseISO(returnDate)
     let days = differenceInCalendarDays(end, start)
     if (isNaN(days) || days < 1) days = 1
-    return car.dailyPrice * days
+    return effectivePrice * days
   }
 
   const getDayCount = () => {
@@ -485,11 +487,36 @@ export default function CarDetails() {
 
       {/* Floating Bar at Bottom */}
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/95 border-t border-gray-800 shadow-2xl px-4 sm:px-16 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 w-full">
-          <span className="text-lg sm:text-2xl font-bold text-white">AED {car.dailyPrice.toLocaleString()}/Day</span>
-          <span className="text-sm sm:text-base text-gray-400">
-            Total: AED {calculateTotal().toLocaleString()} for {getDayCount()} day{getDayCount() > 1 ? "s" : ""}
-          </span>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 w-full">
+          {/* Price Display */}
+          <div className="flex items-center gap-3">
+            {car.discountedPrice && car.discountedPrice < car.originalPrice ? (
+              <>
+                {/* Discount Percentage */}
+                <div className="bg-green-500 text-white px-2 py-1 rounded-md text-sm font-bold">
+                  %{Math.round(((car.originalPrice - car.discountedPrice) / car.originalPrice) * 100)}-
+                </div>
+                {/* Original Price with Strikethrough */}
+                <span className="text-red-400 line-through text-lg font-medium">
+                  AED {car.originalPrice.toLocaleString()}
+                </span>
+                {/* Discounted Price */}
+                <span className="text-2xl font-bold text-white">
+                  AED {car.discountedPrice.toLocaleString()}
+                </span>
+              </>
+            ) : (
+              <span className="text-2xl font-bold text-white">
+                AED {(car.discountedPrice || car.originalPrice || 0).toLocaleString()}
+              </span>
+            )}
+            <span className="text-gray-400 text-sm">/day</span>
+          </div>
+          
+          {/* Total Price */}
+          <div className="text-sm sm:text-base text-gray-300">
+            Total: <span className="font-semibold text-white">AED {calculateTotal().toLocaleString()}</span> for {getDayCount()} day{getDayCount() > 1 ? "s" : ""}
+          </div>
         </div>
         <Button
           size="lg"

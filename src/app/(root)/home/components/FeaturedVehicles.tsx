@@ -37,8 +37,8 @@ export function FeaturedVehicles({ cars, categories }: FeaturedVehiclesProps) {
     car.name && 
     car.brand && 
     car.model &&
-    typeof car.dailyPrice === 'number' &&
-    car.dailyPrice > 0
+    typeof (car.discountedPrice || car.originalPrice) === 'number' &&
+    (car.discountedPrice || car.originalPrice || 0) > 0
   );
 
   // NEW: Sort cars so featured come first, then the rest
@@ -90,7 +90,8 @@ export function FeaturedVehicles({ cars, categories }: FeaturedVehiclesProps) {
     )?.id;
 
     const filtered = validCars.filter(car => {
-      const matchesPrice = car.dailyPrice >= 1000 && car.dailyPrice <= filters.maxPrice;
+      // Filter by price
+      const matchesPrice = (car.discountedPrice || car.originalPrice || 0) >= 1000 && (car.discountedPrice || car.originalPrice || 0) <= filters.maxPrice;
       const matchesTransmission = !filters.transmission ||
         (Array.isArray(car.transmissionIds) && transmissionId && car.transmissionIds.includes(transmissionId));
       const matchesType = typeIds.length === 0 ||

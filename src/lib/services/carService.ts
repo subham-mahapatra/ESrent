@@ -31,7 +31,22 @@ export class CarService {
   static async createCar(carData: CreateCarData): Promise<Car> {
     try {
       await dbConnect();
-      const car = new CarModel(carData);
+      
+      // Handle migration from dailyPrice to originalPrice
+      const processedData = { ...carData };
+      
+      // If dailyPrice exists in the data, map it to originalPrice
+      if ('dailyPrice' in processedData && !processedData.originalPrice) {
+        (processedData as any).originalPrice = (processedData as any).dailyPrice;
+        delete (processedData as any).dailyPrice;
+      }
+      
+      // Ensure originalPrice exists
+      if (!processedData.originalPrice) {
+        throw new Error('originalPrice is required');
+      }
+      
+      const car = new CarModel(processedData);
       const savedCar = await car.save();
       const carObj = savedCar.toJSON();
       (carObj as any).id = carObj._id?.toString();
@@ -96,12 +111,24 @@ export class CarService {
       }
 
       if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
-        query.dailyPrice = {} as { $gte?: number; $lte?: number };
+        // Use discountedPrice if available, otherwise use originalPrice
+        query.$or = [
+          { discountedPrice: { $exists: true, $ne: null } },
+          { originalPrice: {} }
+        ];
+        
         if (filters.minPrice !== undefined) {
-          query.dailyPrice.$gte = filters.minPrice;
+          query.$or[0].discountedPrice = { $gte: filters.minPrice };
+          query.$or[1].originalPrice = { $gte: filters.minPrice };
         }
         if (filters.maxPrice !== undefined) {
-          query.dailyPrice.$lte = filters.maxPrice;
+          if (filters.minPrice !== undefined) {
+            query.$or[0].discountedPrice = { ...query.$or[0].discountedPrice, $lte: filters.maxPrice };
+            query.$or[1].originalPrice = { ...query.$or[1].originalPrice, $lte: filters.maxPrice };
+          } else {
+            query.$or[0].discountedPrice = { $lte: filters.maxPrice };
+            query.$or[1].originalPrice = { $lte: filters.maxPrice };
+          }
         }
       }
 
@@ -161,9 +188,19 @@ export class CarService {
   static async updateCar(id: string, updateData: UpdateCarData): Promise<Car | null> {
     try {
       await dbConnect();
+      
+      // Handle migration from dailyPrice to originalPrice
+      const processedData = { ...updateData };
+      
+      // If dailyPrice exists in the data, map it to originalPrice
+      if ('dailyPrice' in processedData && !processedData.originalPrice) {
+        (processedData as any).originalPrice = (processedData as any).dailyPrice;
+        delete (processedData as any).dailyPrice;
+      }
+      
       const car = await CarModel.findByIdAndUpdate(
         id,
-        { ...updateData, updatedAt: new Date() },
+        { ...processedData, updatedAt: new Date() },
         { new: true, runValidators: true }
       );
       if (!car) return null;

@@ -41,9 +41,11 @@ const defaultCar: Partial<Car> = {
   model: '',
   // year: new Date().getFullYear(),
   // mileage: 0,
-  dailyPrice: 0,
+  originalPrice: 0,
+  discountedPrice: 0,
   images: [],
   description: '',
+  keywords: [],
   features: [],
   available: true,
   featured: false,
@@ -63,6 +65,14 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
     setPreviewImages(car?.images || []);
     setCoverImageIndex(0); // Reset cover image to first image
     setTagsInput(car?.tags ? car.tags.join(', ') : '');
+    
+    // Ensure keywords are properly initialized
+    if (car?.keywords) {
+      setFormData(prev => ({
+        ...prev,
+        keywords: car.keywords
+      }));
+    }
   }, [car]);
 
   // --- Brand API integration ---
@@ -210,8 +220,8 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
     //   alert('Valid mileage is required');
     //   return;
     // }
-    if (!formData.dailyPrice || formData.dailyPrice <= 0) {
-      alert('Valid daily price is required');
+    if (!formData.originalPrice || formData.originalPrice <= 0) {
+      alert('Valid original price is required');
       return;
     }
     if (!formData.carTypeIds || formData.carTypeIds.length === 0) {
@@ -229,6 +239,17 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
     
     // Ensure tags are synced before submit
     const tagsArray = tagsInput.split(',').map(tag => tag.trim()).filter(Boolean);
+    
+    // Process keywords from raw input
+    const rawKeywords = formData.keywords?.[0] || '';
+    const processedKeywords = rawKeywords
+      .split(',')
+      .map(k => k.trim())
+      .filter(k => k.length > 0);
+    
+    console.log('Raw keywords:', rawKeywords);
+    console.log('Processed keywords:', processedKeywords);
+    
     // Map frontend Car interface to server expected format
     const carData = {
       // Required fields for server
@@ -237,10 +258,12 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
       brandId: formData.brandId,
       model: formData.model?.trim() || formData.name?.trim() || '',
       // year: formData.year || new Date().getFullYear(),
-      dailyPrice: formData.dailyPrice || 0,
+      originalPrice: formData.originalPrice || 0,
+      discountedPrice: formData.discountedPrice || 0,
       // mileage: formData.mileage || 0,
       images: formData.images || [],
       description: formData.description || '',
+      keywords: processedKeywords,
       features: formData.features || [],
       available: formData.available ?? true,
       featured: formData.featured ?? false,
@@ -252,6 +275,9 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
       // fuelTypeIds: formData.fuelTypeIds || [],
       tagIds: formData.tagIds || [],
     };
+    
+    console.log('Submitting car data with keywords:', carData.keywords);
+    console.log('Full car data:', carData);
     
     await onSave(carData);
   };
@@ -496,13 +522,22 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
             <h3 className="text-lg font-semibold text-card-foreground">Pricing and Type</h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="dailyPrice" className="text-card-foreground">Daily Price *</Label>
+                <Label htmlFor="originalPrice" className="text-card-foreground">Original Price *</Label>
                 <Input
-                  id="dailyPrice"
+                  id="originalPrice"
                   type="number"
-                  value={formData.dailyPrice || ''}
-                  onChange={(e) => setFormData({ ...formData, dailyPrice: parseFloat(e.target.value) || 0 })}
+                  value={formData.originalPrice || ''}
+                  onChange={(e) => setFormData({ ...formData, originalPrice: parseFloat(e.target.value) || 0 })}
                   required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="discountedPrice" className="text-card-foreground">Discounted Price</Label>
+                <Input
+                  id="discountedPrice"
+                  type="number"
+                  value={formData.discountedPrice || ''}
+                  onChange={(e) => setFormData({ ...formData, discountedPrice: parseFloat(e.target.value) || 0 })}
                 />
               </div>
             </div>
@@ -878,6 +913,37 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
             </div>
           </div>
 
+          {/* Keywords */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-card-foreground">Keywords</h3>
+            <div className="space-y-2">
+              <Label htmlFor="keywords" className="text-card-foreground">
+                Keywords (comma-separated)
+              </Label>
+              <Textarea
+                id="keywords"
+                placeholder="Enter keywords separated by commas (e.g., luxury, sport, automatic, diesel)"
+                value={formData.keywords?.join(', ') || ''}
+                onChange={(e) => {
+                  const inputValue = e.target.value;
+                  console.log('Keywords input value:', inputValue);
+                  
+                  // Store the raw input as a single string for now
+                  setFormData({ ...formData, keywords: [inputValue] });
+                }}
+                className="min-h-[80px]"
+              />
+              {/* Show current keywords for debugging */}
+              {formData.keywords && formData.keywords.length > 0 && formData.keywords[0] && (
+                <div className="text-xs text-muted-foreground">
+                  <span className="font-medium">Current input:</span> {formData.keywords[0]}
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Add relevant keywords to help customers find this car. Separate multiple keywords with commas.
+              </p>
+            </div>
+          </div>
 
 
           <DialogFooter>

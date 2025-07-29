@@ -14,12 +14,13 @@ import Image from 'next/image';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useRouter } from 'next/navigation';
 
-const formatPrice = (dailyPrice: number | undefined | null) => {
-  if (!dailyPrice && dailyPrice !== 0) return 'Price on request';
-  return dailyPrice.toLocaleString('en-US', {
-    style: 'currency',
-    currency: 'AED'
-  }) + '/day';
+const formatPrice = (originalPrice: number | undefined | null, discountedPrice?: number | undefined | null) => {
+  if (!originalPrice && originalPrice !== 0) return 'Price on request';
+  const effectivePrice = discountedPrice || originalPrice;
+  return effectivePrice.toLocaleString('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  });
 };
 
 interface SearchBarProps {

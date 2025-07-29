@@ -7,9 +7,11 @@ export interface ICar {
   name: string;
   year: number;
   mileage: number;
-  dailyPrice: number;
+  originalPrice: number;
+  discountedPrice?: number;
   images: string[];
   description?: string;
+  keywords?: string[];
   features?: string[];
   available?: boolean;
   featured?: boolean;
@@ -55,9 +57,13 @@ const carSchema = new Schema<ICar>({
     type: Number,
     min: 0
   },
-  dailyPrice: {
+  originalPrice: {
     type: Number,
     required: true,
+    min: 0
+  },
+  discountedPrice: {
+    type: Number,
     min: 0
   },
   images: [{
@@ -68,6 +74,10 @@ const carSchema = new Schema<ICar>({
     type: String,
     trim: true
   },
+  keywords: [{
+    type: String,
+    trim: true
+  }],
   features: [{
     type: String,
     trim: true
@@ -129,7 +139,8 @@ carSchema.index({ brand: 1 });
 carSchema.index({ category: 1 });
 carSchema.index({ isFeatured: 1 });
 carSchema.index({ isAvailable: 1 });
-carSchema.index({ dailyPrice: 1 });
+carSchema.index({ originalPrice: 1 });
+carSchema.index({ discountedPrice: 1 });
 carSchema.index({ name: 'text', brand: 'text', model: 'text' });
 
 export const Car: Model<ICar> = mongoose.models.Car || model<ICar>('Car', carSchema); 

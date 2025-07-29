@@ -126,9 +126,11 @@ export default function CarsPage() {
         Array.isArray(car.tagIds) && car.tagIds.some(id => selectedFilters.tags.includes(tagMap[id]?.toLowerCase()))
       );
     }
-    if (selectedFilters.maxPrice < 10000) {
-      filtered = filtered.filter(car => car.dailyPrice <= selectedFilters.maxPrice);
-    }
+    // Filter by price
+    filtered = filtered.filter(car => {
+      const effectivePrice = car.discountedPrice || car.originalPrice || 0;
+      return effectivePrice <= selectedFilters.maxPrice;
+    });
     setFilteredCars(filtered);
     setCurrentPage(1); // Reset to first page on search/filter
   }, [cars, searchQuery, selectedFilters, carTypeMap, tagMap]);
@@ -144,7 +146,7 @@ export default function CarsPage() {
     setCurrentPage(1) // Reset to first page when filters change
 
     const filtered = cars.filter(car => {
-      const matchesPrice = car.dailyPrice >= 1000 && car.dailyPrice <= filters.maxPrice;
+      const matchesPrice = (car.discountedPrice || car.originalPrice || 0) >= 1000 && (car.discountedPrice || car.originalPrice || 0) <= filters.maxPrice;
       const matchesTransmission = !filters.transmission ||
         (Array.isArray(car.transmissionIds) && car.transmissionIds[0] && car.transmissionIds[0] === filters.transmission);
       const matchesCategory = filters.types.length === 0 ||

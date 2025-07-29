@@ -10,9 +10,11 @@ export interface Car {
   transmission: string;
   fuel: string;
   mileage: number;
-  dailyPrice: number;
+  originalPrice: number;
+  discountedPrice?: number;
   images: string[];
   description?: string;
+  keywords?: string[];
   features?: string[];
   category?: string;
   categoryId?: string;

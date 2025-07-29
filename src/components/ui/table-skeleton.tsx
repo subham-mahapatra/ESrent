@@ -18,7 +18,7 @@ export function TableSkeleton() {
       </TableHeader>
       <TableBody>
         {[...Array(5)].map((_, i) => (
-          <TableRow key={i} className="animate-pulse">
+          <TableRow key={`skeleton-row-${i}`} className="animate-pulse">
             <TableCell>
               <Skeleton className="w-16 h-16 rounded-md" />
             </TableCell>

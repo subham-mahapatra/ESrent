@@ -116,12 +116,27 @@ function SearchResults() {
                       )}
                     </div>
                     <div className="mt-4">
-                      <p className="text-xl font-semibold">
-                        AED {typeof car.dailyPrice === 'number' ? car.dailyPrice.toLocaleString('en-US', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2
-                        }) : '0.00'}/day
-                      </p>
+                      <div className="text-lg font-semibold text-primary">
+                        AED {typeof car.originalPrice === 'number' ? (
+                          car.discountedPrice && car.discountedPrice < car.originalPrice ? (
+                            <div className="flex items-baseline gap-2">
+                              <span>{car.discountedPrice.toLocaleString('en-US', {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 0,
+                              })}</span>
+                              <span className="text-gray-400 text-sm line-through">
+                                {car.originalPrice.toLocaleString('en-US', {
+                                  minimumFractionDigits: 0,
+                                  maximumFractionDigits: 0,
+                                })}
+                              </span>
+                            </div>
+                          ) : car.originalPrice.toLocaleString('en-US', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0,
+                          })
+                        ) : 'Price on request'}/day
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

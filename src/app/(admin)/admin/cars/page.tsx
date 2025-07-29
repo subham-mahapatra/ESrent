@@ -129,7 +129,7 @@ export default function AdminCars() {
         );
       } else {
         // Ensure carData matches CreateCarData type
-        const requiredFields = ['brand', 'model', 'name', 'dailyPrice', 'images', 'carTypeIds'];
+        const requiredFields = ['brand', 'model', 'name', 'originalPrice', 'images', 'carTypeIds'];
         for (const field of requiredFields) {
           if (!((carData as any)[field]) || (Array.isArray((carData as any)[field]) && (carData as any)[field].length === 0)) {
             throw new Error(`Missing required field: ${field}`);
@@ -213,8 +213,8 @@ export default function AdminCars() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {cars.map((car: Car) => (
-                    <TableRow key={car.id} className="transition-colors hover:bg-muted/50">
+                  {cars.map((car: Car, index: number) => (
+                    <TableRow key={car.id || `car-${index}`} className="transition-colors hover:bg-muted/50">
                       <TableCell>
                         {car.images && car.images.length > 0 ? (
                           <div className="relative w-16 h-16 rounded-md overflow-hidden">
@@ -257,7 +257,18 @@ export default function AdminCars() {
                           ? car.carTypeIds[0]
                           : 'N/A'}
                       </TableCell>
-                      <TableCell>AED {car.dailyPrice.toLocaleString()}/day</TableCell>
+                      <TableCell>
+                        {car.discountedPrice && car.originalPrice ? (
+                          <div className="flex flex-col">
+                            <span className="text-green-500">{car.discountedPrice.toLocaleString()}</span>
+                            <span className="text-gray-400 text-sm line-through">{car.originalPrice.toLocaleString()}</span>
+                          </div>
+                        ) : car.originalPrice ? (
+                          <span>{car.originalPrice.toLocaleString()}</span>
+                        ) : (
+                          <span className="text-gray-400">Price on request</span>
+                        )}/day
+                      </TableCell>
                       <TableCell>
                         <span className={`px-2 py-1 rounded-full text-sm ${
                           car.available

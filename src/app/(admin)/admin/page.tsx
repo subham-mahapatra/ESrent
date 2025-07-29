@@ -6,13 +6,18 @@ import { AlertCircle } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useCars } from '@/hooks/useApi';
 
-type Car = {
+interface Car {
   id: string;
   name: string;
   brand: string;
-  category?: string;
-  dailyPrice: number;
-};
+  model: string;
+  originalPrice: number;
+  discountedPrice?: number;
+  available: boolean;
+  featured: boolean;
+  createdAt: string;
+  category?: string; // Add this for backward compatibility
+}
 
 export default function AdminDashboard() {
   const carsParams = useMemo(() => ({ limit: 5 }), []);
@@ -115,15 +120,32 @@ export default function AdminDashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(cars as Car[]).slice(0, 5).map((car) => (
-                    <TableRow key={car.id}>
-                      <TableCell className="font-medium">{car.id.slice(0, 8)}</TableCell>
-                      <TableCell>{car.name}</TableCell>
-                      <TableCell className="hidden sm:table-cell">{car.brand}</TableCell>
-                      <TableCell className="hidden lg:table-cell">{car.category || 'N/A'}</TableCell>
-                      <TableCell className="text-right">${car.dailyPrice.toLocaleString()}</TableCell>
+                  {cars.length > 0 ? (
+                    (cars as any as Car[]).slice(0, 5).map((car: Car) => (
+                      <TableRow key={car.id}>
+                        <TableCell className="font-medium">{car.id.slice(0, 8)}</TableCell>
+                        <TableCell>{car.name}</TableCell>
+                        <TableCell className="hidden sm:table-cell">{car.brand}</TableCell>
+                        <TableCell className="hidden lg:table-cell">{car.category || 'N/A'}</TableCell>
+                        <TableCell className="text-right">
+                          {car.discountedPrice && car.originalPrice ? (
+                            <div className="flex flex-col items-end">
+                              <span className="text-green-500">AED {car.discountedPrice.toLocaleString()}</span>
+                              <span className="text-gray-400 text-sm line-through">AED {car.originalPrice.toLocaleString()}</span>
+                            </div>
+                          ) : car.originalPrice ? (
+                            <span>AED {car.originalPrice.toLocaleString()}</span>
+                          ) : (
+                            <span className="text-gray-400">Price on request</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8">No cars found.</TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             </div>

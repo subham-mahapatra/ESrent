@@ -39,14 +39,43 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Check Cloudinary configuration
+    if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 
+        !process.env.CLOUDINARY_API_KEY || 
+        !process.env.CLOUDINARY_API_SECRET) {
+      console.error('Missing Cloudinary environment variables');
+      
+      // Return a helpful error message with setup instructions
+      return NextResponse.json(
+        { 
+          error: 'Cloudinary configuration is missing',
+          setupInstructions: {
+            message: 'Please configure Cloudinary environment variables:',
+            required: [
+              'NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME',
+              'CLOUDINARY_API_KEY', 
+              'CLOUDINARY_API_SECRET'
+            ],
+            example: 'Check your .env.local file and ensure all Cloudinary variables are set'
+          }
+        },
+        { status: 500 }
+      );
+    }
+
     // Convert files to base64 for Cloudinary
     const uploadPromises = files.map(async (file) => {
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      const base64 = buffer.toString('base64');
-      const dataURI = `data:${file.type};base64,${base64}`;
-      
-      return CloudinaryService.uploadImage(dataURI, folder);
+      try {
+        const bytes = await file.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+        const base64 = buffer.toString('base64');
+        const dataURI = `data:${file.type};base64,${base64}`;
+        
+        return await CloudinaryService.uploadImage(dataURI, folder);
+      } catch (error) {
+        console.error(`Error uploading file ${file.name}:`, error);
+        throw new Error(`Failed to upload ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
     });
 
     const results = await Promise.all(uploadPromises);
@@ -63,8 +92,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error in POST /api/upload:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return NextResponse.json(
-      { error: 'Failed to upload files' },
+      { error: `Failed to upload files: ${errorMessage}` },
       { status: 500 }
     );
   }
@@ -99,4 +129,21 @@ export async function DELETE(request: NextRequest) {
       { status: 500 }
     );
   }
+} 
+
+export async function GET(request: NextRequest) {
+  // Simple test endpoint to check Cloudinary configuration
+  const config = {
+    cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+    apiKey: process.env.CLOUDINARY_API_KEY ? '***' : 'MISSING',
+    apiSecret: process.env.CLOUDINARY_API_SECRET ? '***' : 'MISSING',
+  };
+  
+  return NextResponse.json({
+    message: 'Cloudinary configuration check',
+    config,
+    isConfigured: !!(process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME && 
+                     process.env.CLOUDINARY_API_KEY && 
+                     process.env.CLOUDINARY_API_SECRET)
+  });
 } 
