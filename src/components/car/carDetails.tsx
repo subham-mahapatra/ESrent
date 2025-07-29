@@ -75,7 +75,21 @@ export default function CarDetails() {
     error,
   } = useCar(carId) as { data: CarDetailsInterface | null; loading: boolean; error: any }
 
-  const { data: brandData } = useBrand((car as any)?.brandId || "")
+  const { data: brandData } = useBrand((car as any)?.brandId || "");
+  
+  // Debug brand data
+  useEffect(() => {
+    if (brandData) {
+      console.log('Brand data:', brandData);
+      console.log('Car brandId:', (car as any)?.brandId);
+      if (brandData.data && Array.isArray(brandData.data)) {
+        const brand = brandData.data.find(b => b.id === (car as any)?.brandId);
+        console.log('Found brand:', brand);
+        console.log('Brand logo URL:', brand?.logo);
+      }
+    }
+  }, [brandData, car]);
+
   const { data: categoriesData, loading: categoriesLoading } = useCategories()
   const categories = categoriesData?.data || []
 
@@ -364,17 +378,50 @@ export default function CarDetails() {
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg bg-white overflow-hidden">
-                  {brandData && Array.isArray(brandData.data) && brandData.data[0]?.logo ? (
-                    <Image
-                    src={brandData.data.find(brand => brand.id === (car as any).brandId)?.logo}
-                    alt={brandData.data.find(brand => brand.id === (car as any).brandId)?.name || "Brand Logo"}
-                      width={48}
-                      height={48}
-                      className="object-contain w-12 h-12"
-                    />
-                  ) : (
-                    <Car className="w-6 h-6 text-gray-400" />
-                  )}
+                  {(() => {
+                    // Try to get brand data with multiple fallbacks
+                    let brandLogo = null;
+                    let brandName = null;
+                    
+                    // Method 1: Try to get from brandData
+                    if (brandData && brandData.data && Array.isArray(brandData.data)) {
+                      const brand = brandData.data.find(b => b.id === (car as any)?.brandId);
+                      if (brand && brand.logo) {
+                        brandLogo = brand.logo;
+                        brandName = brand.name;
+                      }
+                    }
+                    
+                    // Method 2: Try to get from car.brand if no logo found
+                    if (!brandLogo && car.brand) {
+                      brandName = car.brand;
+                    }
+                    
+                    return brandLogo ? (
+                      <Image
+                        src={brandLogo}
+                        alt={brandName || "Brand Logo"}
+                        width={48}
+                        height={48}
+                        className="object-contain w-12 h-12"
+                        onError={(e) => {
+                          console.error('Brand logo failed to load:', brandLogo);
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <div className="w-12 h-12 flex items-center justify-center">
+                        {brandName ? (
+                          <span className="text-gray-600 font-bold text-sm">
+                            {brandName.substring(0, 2).toUpperCase()}
+                          </span>
+                        ) : (
+                          <Car className="w-6 h-6 text-gray-400" />
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
                 <h1 className="text-4xl font-bold text-white">{car.name}</h1>
               </div>
