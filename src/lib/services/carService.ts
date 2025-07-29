@@ -46,6 +46,29 @@ export class CarService {
         throw new Error('originalPrice is required');
       }
       
+      // Validate price values
+      if (processedData.originalPrice <= 0) {
+        throw new Error('Original price must be greater than 0');
+      }
+      
+      if (processedData.discountedPrice && processedData.discountedPrice < 0) {
+        throw new Error('Discounted price cannot be negative');
+      }
+      
+      if (processedData.discountedPrice && processedData.discountedPrice >= processedData.originalPrice) {
+        throw new Error('Discounted price must be less than original price');
+      }
+      
+      // Validate images
+      if (!processedData.images || processedData.images.length === 0) {
+        throw new Error('At least one image is required');
+      }
+      
+      // Validate car types
+      if (!processedData.carTypeIds || processedData.carTypeIds.length === 0) {
+        throw new Error('At least one car type must be selected');
+      }
+      
       const car = new CarModel(processedData);
       const savedCar = await car.save();
       const carObj = savedCar.toJSON();
@@ -55,7 +78,27 @@ export class CarService {
       return carObj as unknown as Car;
     } catch (error) {
       console.error('Error creating car:', error);
-      throw new Error('Failed to create car');
+      
+      // Handle specific MongoDB errors
+      if (error instanceof Error) {
+        if (error.message.includes('duplicate key error')) {
+          throw new Error('A car with this name already exists');
+        }
+        if (error.message.includes('validation failed')) {
+          throw new Error('Car data validation failed. Please check all required fields');
+        }
+        if (error.message.includes('Cast to ObjectId failed')) {
+          throw new Error('Invalid ID format provided');
+        }
+        // Re-throw specific validation errors
+        if (error.message.includes('is required') || 
+            error.message.includes('must be') || 
+            error.message.includes('cannot be')) {
+          throw error;
+        }
+      }
+      
+      throw new Error('Failed to create car. Please check your data and try again');
     }
   }
 
@@ -189,6 +232,11 @@ export class CarService {
     try {
       await dbConnect();
       
+      // Validate ID format
+      if (!id || id.trim() === '') {
+        throw new Error('Car ID is required');
+      }
+      
       // Handle migration from dailyPrice to originalPrice
       const processedData = { ...updateData };
       
@@ -196,6 +244,33 @@ export class CarService {
       if ('dailyPrice' in processedData && !processedData.originalPrice) {
         (processedData as any).originalPrice = (processedData as any).dailyPrice;
         delete (processedData as any).dailyPrice;
+      }
+      
+      // Validate price values if provided
+      if (processedData.originalPrice !== undefined) {
+        if (processedData.originalPrice <= 0) {
+          throw new Error('Original price must be greater than 0');
+        }
+      }
+      
+      if (processedData.discountedPrice !== undefined) {
+        if (processedData.discountedPrice < 0) {
+          throw new Error('Discounted price cannot be negative');
+        }
+        
+        if (processedData.originalPrice && processedData.discountedPrice >= processedData.originalPrice) {
+          throw new Error('Discounted price must be less than original price');
+        }
+      }
+      
+      // Validate images if provided
+      if (processedData.images !== undefined && (!Array.isArray(processedData.images) || processedData.images.length === 0)) {
+        throw new Error('At least one image is required');
+      }
+      
+      // Validate car types if provided
+      if (processedData.carTypeIds !== undefined && (!Array.isArray(processedData.carTypeIds) || processedData.carTypeIds.length === 0)) {
+        throw new Error('At least one car type must be selected');
       }
       
       const car = await CarModel.findByIdAndUpdate(
@@ -211,7 +286,27 @@ export class CarService {
       return carObj as unknown as Car;
     } catch (error) {
       console.error('Error updating car:', error);
-      throw new Error('Failed to update car');
+      
+      // Handle specific MongoDB errors
+      if (error instanceof Error) {
+        if (error.message.includes('duplicate key error')) {
+          throw new Error('A car with this name already exists');
+        }
+        if (error.message.includes('validation failed')) {
+          throw new Error('Car data validation failed. Please check all required fields');
+        }
+        if (error.message.includes('Cast to ObjectId failed')) {
+          throw new Error('Invalid car ID format');
+        }
+        // Re-throw specific validation errors
+        if (error.message.includes('is required') || 
+            error.message.includes('must be') || 
+            error.message.includes('cannot be')) {
+          throw error;
+        }
+      }
+      
+      throw new Error('Failed to update car. Please check your data and try again');
     }
   }
 

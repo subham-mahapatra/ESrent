@@ -118,9 +118,27 @@ export default function AdminCars() {
           },
           body: JSON.stringify(carData),
         });
+        
         if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
+          const errorData = await res.json().catch(() => ({}));
+          const errorMessage = errorData.error || `HTTP error! status: ${res.status}`;
+          
+          // Handle specific error cases
+          if (res.status === 400) {
+            throw new Error(`Validation Error: ${errorMessage}`);
+          } else if (res.status === 404) {
+            throw new Error('Car not found. It may have been deleted by another user.');
+          } else if (res.status === 401) {
+            throw new Error('Authentication expired. Please log in again.');
+          } else if (res.status === 403) {
+            throw new Error('You do not have permission to update this car.');
+          } else if (res.status === 409) {
+            throw new Error('Car name already exists. Please choose a different name.');
+          } else {
+            throw new Error(`Update failed: ${errorMessage}`);
+          }
         }
+        
         const updatedCar = await res.json();
         setCars(prevCars => 
           prevCars.map(car => 
@@ -135,6 +153,7 @@ export default function AdminCars() {
             throw new Error(`Missing required field: ${field}`);
           }
         }
+        
         const res = await fetch('/api/cars', {
           method: 'POST',
           headers: {
@@ -143,9 +162,27 @@ export default function AdminCars() {
           },
           body: JSON.stringify(carData),
         });
+        
         if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
+          const errorData = await res.json().catch(() => ({}));
+          const errorMessage = errorData.error || `HTTP error! status: ${res.status}`;
+          
+          // Handle specific error cases
+          if (res.status === 400) {
+            throw new Error(`Validation Error: ${errorMessage}`);
+          } else if (res.status === 401) {
+            throw new Error('Authentication expired. Please log in again.');
+          } else if (res.status === 403) {
+            throw new Error('You do not have permission to create cars.');
+          } else if (res.status === 409) {
+            throw new Error('Car name already exists. Please choose a different name.');
+          } else if (res.status === 413) {
+            throw new Error('Car data is too large. Please reduce the number of images or description length.');
+          } else {
+            throw new Error(`Creation failed: ${errorMessage}`);
+          }
         }
+        
         const createdCar = await res.json();
         setCars(prevCars => [...prevCars, createdCar]);
       }
@@ -164,10 +201,20 @@ export default function AdminCars() {
       fetchCars();
     } catch (error) {
       console.error('Error saving car:', error);
+      
+      // Extract specific error message
+      let errorMessage = 'Failed to save car. Please try again.';
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
       setStatusModal({
         open: true,
         title: 'Error',
-        description: 'Failed to save car. Please try again.',
+        description: errorMessage,
         status: 'error',
       });
     }

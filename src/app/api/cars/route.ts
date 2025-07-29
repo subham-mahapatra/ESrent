@@ -67,16 +67,61 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     console.log('POST /api/cars body:', body);
     
-    // Validate required fields
-    const requiredFields = ['brand', 'brandId', 'model', 'name', 'originalPrice', 'images', 'carTypeIds'];
-    for (const field of requiredFields) {
+    // Validate required fields with specific error messages
+    const requiredFields = [
+      { field: 'brand', name: 'Brand' },
+      { field: 'brandId', name: 'Brand ID' },
+      { field: 'model', name: 'Model' },
+      { field: 'name', name: 'Car Name' },
+      { field: 'originalPrice', name: 'Original Price' },
+      { field: 'images', name: 'Images' },
+      { field: 'carTypeIds', name: 'Car Type' }
+    ];
+    
+    for (const { field, name } of requiredFields) {
       if (!body[field] || (Array.isArray(body[field]) && body[field].length === 0)) {
         console.warn(`Missing required field: ${field}`);
         return NextResponse.json(
-          { error: `Missing required field: ${field}` },
+          { error: `${name} is required. Please provide a valid ${name.toLowerCase()}.` },
           { status: 400 }
         );
       }
+    }
+    
+    // Additional validations
+    if (body.originalPrice && (isNaN(body.originalPrice) || body.originalPrice <= 0)) {
+      return NextResponse.json(
+        { error: 'Original price must be a positive number.' },
+        { status: 400 }
+      );
+    }
+    
+    if (body.discountedPrice && (isNaN(body.discountedPrice) || body.discountedPrice < 0)) {
+      return NextResponse.json(
+        { error: 'Discounted price must be a non-negative number.' },
+        { status: 400 }
+      );
+    }
+    
+    if (body.discountedPrice && body.originalPrice && body.discountedPrice >= body.originalPrice) {
+      return NextResponse.json(
+        { error: 'Discounted price must be less than the original price.' },
+        { status: 400 }
+      );
+    }
+    
+    if (body.images && (!Array.isArray(body.images) || body.images.length === 0)) {
+      return NextResponse.json(
+        { error: 'At least one image is required.' },
+        { status: 400 }
+      );
+    }
+    
+    if (body.carTypeIds && (!Array.isArray(body.carTypeIds) || body.carTypeIds.length === 0)) {
+      return NextResponse.json(
+        { error: 'At least one car type must be selected.' },
+        { status: 400 }
+      );
     }
 
     const car = await CarService.createCar(body);
@@ -85,8 +130,31 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(car, { status: 201 });
   } catch (error) {
     console.error('Error in POST /api/cars:', error);
+    
+    // Handle specific error types
+    if (error instanceof Error) {
+      if (error.message.includes('originalPrice is required')) {
+        return NextResponse.json(
+          { error: 'Original price is required. Please provide a valid price.' },
+          { status: 400 }
+        );
+      }
+      if (error.message.includes('duplicate key error')) {
+        return NextResponse.json(
+          { error: 'A car with this name already exists. Please choose a different name.' },
+          { status: 409 }
+        );
+      }
+      if (error.message.includes('validation failed')) {
+        return NextResponse.json(
+          { error: 'Car data validation failed. Please check all required fields.' },
+          { status: 400 }
+        );
+      }
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to create car' },
+      { error: 'Failed to create car. Please try again or contact support if the problem persists.' },
       { status: 500 }
     );
   }

@@ -27,6 +27,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import Image from 'next/image';
 import { useBrands, useCategories } from '@/hooks/useApi';
 import { Category } from '@/types/category';
+import { useToast } from '@/components/hooks/use-toast';
 
 interface CarDialogProps {
   car?: Car;
@@ -58,6 +59,7 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
   const [coverImageIndex, setCoverImageIndex] = useState<number>(0);
   const [tagsInput, setTagsInput] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
   
   useEffect(() => {
     // Reset form data and preview images when car prop changes
@@ -116,6 +118,36 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
 
     setUploading(true);
     try {
+      // Validate file types before upload
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      const invalidFiles = Array.from(files).filter(file => !allowedTypes.includes(file.type));
+      
+      if (invalidFiles.length > 0) {
+        const invalidFileNames = invalidFiles.map(file => file.name).join(', ');
+        toast({
+          title: `Invalid file type(s): ${invalidFileNames}`,
+          description: `Allowed file types: JPEG, JPG, PNG, WebP`,
+          variant: 'destructive',
+        });
+        setUploading(false);
+        return;
+      }
+
+      // Validate file sizes (max 10MB per file)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      const oversizedFiles = Array.from(files).filter(file => file.size > maxSize);
+      
+      if (oversizedFiles.length > 0) {
+        const oversizedFileNames = oversizedFiles.map(file => file.name).join(', ');
+        toast({
+          title: `File(s) too large: ${oversizedFileNames}`,
+          description: `Maximum file size: 10MB`,
+          variant: 'destructive',
+        });
+        setUploading(false);
+        return;
+      }
+
       // Create temporary preview URLs
       const newPreviewUrls = Array.from(files).map(file => URL.createObjectURL(file));
       setPreviewImages([...previewImages, ...newPreviewUrls]);
@@ -137,9 +169,42 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
       newPreviewUrls.forEach(URL.revokeObjectURL);
     } catch (error) {
       console.error('Error uploading images:', error);
-      // Handle error (show toast notification, etc.)
+      
+      // Show user-friendly error message
+      let errorMessage = 'Failed to upload images. Please try again.';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Invalid file type')) {
+          errorMessage = 'One or more files have an unsupported format. Please use JPEG, JPG, PNG, or WebP files only.';
+        } else if (error.message.includes('File too large')) {
+          errorMessage = 'One or more files are too large. Maximum file size is 10MB.';
+        } else if (error.message.includes('Network') || error.message.includes('fetch')) {
+          errorMessage = 'Network error. Please check your internet connection and try again.';
+        } else if (error.message.includes('Unauthorized') || error.message.includes('401')) {
+          errorMessage = 'Authentication expired. Please log in again.';
+        } else if (error.message.includes('Forbidden') || error.message.includes('403')) {
+          errorMessage = 'You do not have permission to upload images.';
+        } else if (error.message.includes('413')) {
+          errorMessage = 'Files are too large. Please reduce file sizes and try again.';
+        } else {
+          errorMessage = `Upload failed: ${error.message}`;
+        }
+      }
+      
+      toast({
+        title: errorMessage,
+        variant: 'destructive',
+      });
+      
+      // Remove any temporary preview URLs that were created
+      const newPreviewUrls = Array.from(files).map(file => URL.createObjectURL(file));
+      newPreviewUrls.forEach(URL.revokeObjectURL);
     } finally {
       setUploading(false);
+      // Clear the file input
+      if (event.target) {
+        event.target.value = '';
+      }
     }
   };
 
@@ -199,43 +264,82 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate required fields
+    // Validate required fields with specific error messages
     if (!formData.name?.trim()) {
-      alert('Name is required');
+      toast({
+        title: 'Car name is required.',
+        description: 'Please enter a name for the vehicle.',
+        variant: 'destructive',
+      });
       return;
     }
     if (!formData.brand?.trim()) {
-      alert('Brand is required');
+      toast({
+        title: 'Brand is required.',
+        description: 'Please select a car brand.',
+        variant: 'destructive',
+      });
       return;
     }
     if (!formData.model?.trim()) {
-      alert('Model is required');
+      toast({
+        title: 'Model is required.',
+        description: 'Please enter the car model.',
+        variant: 'destructive',
+      });
       return;
     }
-    // if (!formData.year || formData.year < 1900) {
-    //   alert('Valid year is required');
-    //   return;
-    // }
-    // if (!formData.mileage || formData.mileage <= 0) {
-    //   alert('Valid mileage is required');
-    //   return;
-    // }
     if (!formData.originalPrice || formData.originalPrice <= 0) {
-      alert('Valid original price is required');
+      toast({
+        title: 'Valid original price is required.',
+        description: 'Please enter a price greater than 0.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (formData.discountedPrice && formData.discountedPrice >= formData.originalPrice) {
+      toast({
+        title: 'Discounted price must be less than the original price.',
+        description: 'Please ensure the discounted price is lower than the original price.',
+        variant: 'destructive',
+      });
       return;
     }
     if (!formData.carTypeIds || formData.carTypeIds.length === 0) {
-      alert('Car type is required');
+      toast({
+        title: 'Car type is required.',
+        description: 'Please select at least one car type.',
+        variant: 'destructive',
+      });
       return;
     }
-    // if (!formData.fuelTypeIds || formData.fuelTypeIds.length === 0) {
-    //   alert('Fuel type is required');
-    //   return;
-    // }
-    // if (!formData.transmissionIds || formData.transmissionIds.length === 0) {
-    //   alert('Transmission is required');
-    //   return;
-    // }
+    if (!formData.images || formData.images.length === 0) {
+      toast({
+        title: 'At least one image is required.',
+        description: 'Please upload at least one car image.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (!formData.description?.trim()) {
+      toast({
+        title: 'Description is required.',
+        description: 'Please enter a description for the car.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // Validate image URLs
+    const invalidImages = formData.images?.filter(img => !img || img.trim() === '');
+    if (invalidImages && invalidImages.length > 0) {
+      toast({
+        title: 'Some images have invalid URLs.',
+        description: 'Please check and fix the image uploads.',
+        variant: 'destructive',
+      });
+      return;
+    }
     
     // Ensure tags are synced before submit
     const tagsArray = tagsInput.split(',').map(tag => tag.trim()).filter(Boolean);
@@ -610,10 +714,12 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
                   )}
                 </div>
               </div>
+              
+              {/* File Type and Size Info */}
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/jpg,image/png,image/webp"
                 multiple
                 className="hidden"
                 onChange={handleImageUpload}
@@ -917,9 +1023,6 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-card-foreground">Keywords</h3>
             <div className="space-y-2">
-              <Label htmlFor="keywords" className="text-card-foreground">
-                Keywords (comma-separated)
-              </Label>
               <Textarea
                 id="keywords"
                 placeholder="Enter keywords separated by commas (e.g., luxury, sport, automatic, diesel)"
