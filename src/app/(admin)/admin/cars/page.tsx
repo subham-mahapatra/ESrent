@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { AlertCircle, Pencil, Trash2, Plus } from 'lucide-react';
+import { AlertCircle, Pencil, Trash2, Plus, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { Car } from '@/types/car';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Image from 'next/image';
@@ -31,25 +31,44 @@ export default function AdminCars() {
     description: '',
     status: 'success',
   });
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCars, setTotalCars] = useState(0);
+  const [pageSize, setPageSize] = useState(12);
+  
   const { toast } = useToast();
 
-  const fetchCars = async () => {
+  const fetchCars = async (page: number = currentPage) => {
     try {
       setError(null);
       setLoading(true);
-      // Fetch from API route only
-      console.log('Fetching cars from /api/cars...');
-      const res = await fetch('/api/cars');
+      
+      // Fetch from API route with pagination
+      console.log(`Fetching cars from /api/cars?page=${page}&limit=${pageSize}...`);
+      const res = await fetch(`/api/cars?page=${page}&limit=${pageSize}`);
       const data = await res.json();
       console.log('Raw /api/cars response:', data);
+      
       let carsArray: Car[] = [];
-      if (Array.isArray(data)) {
-        carsArray = data;
-      } else if ('data' in data && Array.isArray(data.data)) {
+      if (data.data && Array.isArray(data.data)) {
         carsArray = data.data;
-      } else if ('cars' in data && Array.isArray(data.cars)) {
+        setTotalCars(data.total || 0);
+        setTotalPages(data.totalPages || 1);
+        setCurrentPage(data.page || page);
+      } else if (Array.isArray(data)) {
+        carsArray = data;
+        setTotalCars(carsArray.length);
+        setTotalPages(1);
+        setCurrentPage(1);
+      } else if (data.cars && Array.isArray(data.cars)) {
         carsArray = data.cars;
+        setTotalCars(data.total || carsArray.length);
+        setTotalPages(data.totalPages || 1);
+        setCurrentPage(data.page || 1);
       }
+      
       setCars([...carsArray]);
     } catch (error) {
       console.error('Error fetching cars:', error);
@@ -63,8 +82,24 @@ export default function AdminCars() {
   };
 
   useEffect(() => {
-    fetchCars();
+    fetchCars(1);
   }, []);
+
+  // Pagination control functions
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      fetchCars(page);
+    }
+  };
+
+  const goToFirstPage = () => goToPage(1);
+  const goToLastPage = () => goToPage(totalPages);
+  const goToPreviousPage = () => goToPage(currentPage - 1);
+  const goToNextPage = () => goToPage(currentPage + 1);
+
+  const canGoPrevious = currentPage > 1;
+  const canGoNext = currentPage < totalPages;
 
   const handleAddCar = () => {
     setSelectedCar(undefined);
@@ -95,7 +130,7 @@ export default function AdminCars() {
         title: 'Car deleted',
         description: `${car.name} has been deleted successfully.`,
       });
-      fetchCars();
+      fetchCars(currentPage);
     } catch (error) {
       console.error('Error deleting car:', error);
       toast({
@@ -198,7 +233,7 @@ export default function AdminCars() {
       });
 
       // Fetch fresh data in the background
-      fetchCars();
+      fetchCars(currentPage);
     } catch (error) {
       console.error('Error saving car:', error);
       
@@ -358,6 +393,126 @@ export default function AdminCars() {
               <TableSkeleton />
             </div>
           </div>
+
+          {/* Pagination Controls */}
+          {!loading && totalPages > 1 && (
+            <div className="flex items-center justify-between mt-6">
+              {/* Page Info */}
+              <div className="text-sm text-muted-foreground">
+                Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalCars)} of {totalCars} cars
+              </div>
+
+              {/* Page Size Selector */}
+              {/* <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Show:</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    const newPageSize = parseInt(e.target.value);
+                    setPageSize(newPageSize);
+                    setCurrentPage(1); // Reset to first page when changing page size
+                    fetchCars(1); // Fetch with new page size
+                  }}
+                  className="border border-input bg-background px-2 py-1 rounded-md text-sm"
+                >
+                  <option value={6}>6 per page</option>
+                  <option value={12}>12 per page</option>
+                  <option value={24}>24 per page</option>
+                  <option value={48}>48 per page</option>
+                </select>
+              </div> */}
+
+              {/* Pagination Buttons */}
+              <div className="flex items-center gap-2">
+                {/* First Page */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToFirstPage}
+                  disabled={!canGoPrevious}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronsLeft className="h-4 w-4" />
+                </Button>
+
+                {/* Previous Page */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToPreviousPage}
+                  disabled={!canGoPrevious}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+
+                {/* Page Numbers */}
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => goToPage(pageNum)}
+                        className="h-8 w-8 p-0"
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+
+                {/* Next Page */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToNextPage}
+                  disabled={!canGoNext}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+
+                {/* Last Page */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToLastPage}
+                  disabled={!canGoNext}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronsRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!loading && cars.length === 0 && (
+            <div className="text-center py-12">
+              <div className="text-muted-foreground mb-4">
+                <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <h3 className="text-lg font-semibold mb-2">No cars found</h3>
+                <p className="text-sm">Get started by adding your first car.</p>
+              </div>
+              <Button onClick={handleAddCar}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Your First Car
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
