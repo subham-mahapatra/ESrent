@@ -16,7 +16,7 @@ export default function BrandsPage() {
 
   useEffect(() => {
     brands.forEach(brand => {
-      console.log('Brand:', brand.name, 'ID:', brand.id);
+      // console.log('Brand:', brand.name, 'ID:', brand.id);
     });
   }, [brands]);
 

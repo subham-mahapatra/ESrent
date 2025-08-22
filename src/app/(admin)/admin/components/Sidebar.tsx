@@ -10,7 +10,8 @@ import {
   BookOpen, 
   BarChart3, 
   Settings,
-  LogOut 
+  LogOut,
+  MessageSquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -19,6 +20,7 @@ const menuItems = [
   { name: 'Cars', href: '/admin/cars', icon: Car },
   { name: 'Brands', href: '/admin/brands', icon: BookOpen },
   { name: 'Categories', href: '/admin/categories', icon: Tag },
+  { name: 'Reviews', href: '/admin/reviews', icon: MessageSquare },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
 ];
 

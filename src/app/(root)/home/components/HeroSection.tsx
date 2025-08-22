@@ -57,7 +57,7 @@ export function HeroSection() {
       loadCategoriesWithCarCount();
     }, []);
 
-    console.log('Categories...........:', categories);
+    // console.log('Categories...........:', categories);
 
   const handleSearch = () => {
     const message = `Hi, I'm interested in renting a car with the following preferences:

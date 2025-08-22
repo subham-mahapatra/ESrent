@@ -301,7 +301,7 @@ export class UserService {
       });
 
       await defaultAdmin.save();
-      console.log('Default admin user created');
+      // console.log('Default admin user created'); 
     } catch (error) {
       console.error('Error creating default admin:', error);
       throw new Error('Failed to create default admin');

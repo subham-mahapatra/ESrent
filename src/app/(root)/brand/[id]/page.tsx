@@ -15,7 +15,7 @@ import { Car } from "@/types/car";
 
 export default function BrandPage() {
   const params = useParams()
-  console.log("Brand page params:", params)
+  // console.log("Brand page params:", params)
   const id = params.id as string
   const [isClient, setIsClient] = useState(false)
 

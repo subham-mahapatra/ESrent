@@ -120,7 +120,7 @@ function FeaturedContent() {
     categories.filter(category => category && category.name), 
     [categories]
   );
-  console.log("validCategories",validCategories)
+  // console.log("validCategories",validCategories)
 
   // Handle retry for all data
   const handleRetry = () => {

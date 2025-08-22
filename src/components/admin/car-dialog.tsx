@@ -98,15 +98,6 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
   const transmissionCategories: Category[] = categoriesArray.filter((cat) => cat.type === 'transmission');
   const tagCategories: Category[] = categoriesArray.filter((cat) => cat.type === 'tag');
   
-  useEffect(() => {
-    if (categories) {
-      console.log('Fetched categories:', categories);
-      console.log('Categories array:', categoriesArray);
-      console.log('Car type categories:', carTypeCategories);
-      console.log('Fuel type categories:', fuelTypeCategories);
-    }
-  }, [categories, categoriesArray, carTypeCategories, fuelTypeCategories]);
-
 
   useEffect(() => {
     // setBrands([]); // or mock data
@@ -351,8 +342,8 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
       .map(k => k.trim())
       .filter(k => k.length > 0);
     
-    console.log('Raw keywords:', rawKeywords);
-    console.log('Processed keywords:', processedKeywords);
+    // console.log('Raw keywords:', rawKeywords);
+    // console.log('Processed keywords:', processedKeywords);
     
     // Map frontend Car interface to server expected format
     const carData = {
@@ -380,8 +371,8 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
       tagIds: formData.tagIds || [],
     };
     
-    console.log('Submitting car data with keywords:', carData.keywords);
-    console.log('Full car data:', carData);
+    // console.log('Submitting car data with keywords:', carData.keywords);
+    // console.log('Full car data:', carData);
     
     await onSave(carData);
   };
@@ -765,12 +756,14 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
                       )}
                       
                       {/* Image */}
-                      <Image
-                        src={url}
-                        alt={`Car image ${index + 1}`}
-                        fill
-                        className="object-cover transition-transform duration-200 group-hover:scale-105"
-                      />
+                      {url && url.trim() !== '' && (
+                        <Image
+                          src={url}
+                          alt={`Car image ${index + 1}`}
+                          fill
+                          className="object-cover transition-transform duration-200 group-hover:scale-105"
+                        />
+                      )}
                       
                       {/* Overlay Actions */}
                       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-200 flex flex-col justify-between p-4">
@@ -1029,7 +1022,7 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
                 value={formData.keywords?.join(', ') || ''}
                 onChange={(e) => {
                   const inputValue = e.target.value;
-                  console.log('Keywords input value:', inputValue);
+                  // console.log('Keywords input value:', inputValue);
                   
                   // Store the raw input as a single string for now
                   setFormData({ ...formData, keywords: [inputValue] });

@@ -42,7 +42,7 @@ function SearchResults() {
       try {
         // Use our new search API instead of Algolia
         setResults([]); // or mock data
-        console.log('Search results:', []); // Debug log
+        // console.log('Search results:', []); // Debug log
 
       } catch (error) {
         console.error('Error searching cars:', error)

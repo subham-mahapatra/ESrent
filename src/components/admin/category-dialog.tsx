@@ -247,7 +247,7 @@ export function CategoryDialog({ open, onOpenChange, category, onSave }: Categor
           <div className="space-y-2">
             <Label className="text-card-foreground">Image</Label>
             <div className="mt-2 flex items-center gap-4">
-              {previewUrl ? (
+              {previewUrl && previewUrl.trim() !== '' ? (
                 <div className="relative w-32 h-32">
                   <Image
                     src={previewUrl}

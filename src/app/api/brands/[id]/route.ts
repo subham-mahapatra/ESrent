@@ -11,7 +11,7 @@ function getIdFromRequest(request: NextRequest): string {
 export async function GET(request: NextRequest) {
   try {
     const id = getIdFromRequest(request);
-    console.log('Fetching brand by id:', id);
+    // console.log('Fetching brand by id:', id);
     
     if (!id) {
       return NextResponse.json(

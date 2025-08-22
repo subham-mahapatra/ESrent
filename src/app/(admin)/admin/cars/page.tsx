@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { AlertCircle, Pencil, Trash2, Plus, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
-import { Car } from '@/types/car';
+import { AlertCircle, Pencil, Trash2, Plus, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Car, TrendingUp, CheckCircle, XCircle } from 'lucide-react';
+import { Car as CarType } from '@/types/car';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -15,11 +15,11 @@ import { useAuth } from '@/hooks/useApi';
 
 export default function AdminCars() {
   const { token } = useAuth();
-  const [cars, setCars] = useState<Car[]>([]);
+  const [cars, setCars] = useState<CarType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<{ error: string; details?: string } | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedCar, setSelectedCar] = useState<Car | undefined>();
+  const [selectedCar, setSelectedCar] = useState<CarType | undefined>();
   const [statusModal, setStatusModal] = useState<{
     open: boolean;
     title: string;
@@ -38,6 +38,15 @@ export default function AdminCars() {
   const [totalCars, setTotalCars] = useState(0);
   const [pageSize, setPageSize] = useState(12);
   
+  // Stats state for total data
+  const [stats, setStats] = useState({
+    total: 0,
+    available: 0,
+    featured: 0,
+    unavailable: 0,
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
+  
   const { toast } = useToast();
 
   const fetchCars = async (page: number = currentPage) => {
@@ -46,12 +55,12 @@ export default function AdminCars() {
       setLoading(true);
       
       // Fetch from API route with pagination
-      console.log(`Fetching cars from /api/cars?page=${page}&limit=${pageSize}...`);
+      // console.log(`Fetching cars from /api/cars?page=${page}&limit=${pageSize}...`);
       const res = await fetch(`/api/cars?page=${page}&limit=${pageSize}`);
       const data = await res.json();
-      console.log('Raw /api/cars response:', data);
+      // console.log('Raw /api/cars response:', data);
       
-      let carsArray: Car[] = [];
+      let carsArray: CarType[] = [];
       if (data.data && Array.isArray(data.data)) {
         carsArray = data.data;
         setTotalCars(data.total || 0);
@@ -81,8 +90,54 @@ export default function AdminCars() {
     }
   };
 
+  // Fetch total stats from all cars
+  const fetchTotalStats = async () => {
+    try {
+      setStatsLoading(true);
+      const res = await fetch('/api/cars?limit=1000'); // Get all cars for stats
+      const data = await res.json();
+      
+      let allCars: CarType[] = [];
+      if (data.data && Array.isArray(data.data)) {
+        allCars = data.data;
+      } else if (Array.isArray(data)) {
+        allCars = data;
+      } else if (data.cars && Array.isArray(data.cars)) {
+        allCars = data.cars;
+      }
+
+      // Calculate stats from all cars
+      const total = allCars.length;
+      const available = allCars.filter(car => car.available).length;
+      const featured = allCars.filter(car => car.featured).length;
+      const unavailable = allCars.filter(car => !car.available).length;
+
+      setStats({
+        total,
+        available,
+        featured,
+        unavailable,
+      });
+    } catch (error) {
+      console.error('Error fetching total stats:', error);
+      // Fallback to current page data
+      setStats({
+        total: cars.length,
+        available: cars.filter(car => car.available).length,
+        featured: cars.filter(car => car.featured).length,
+        unavailable: cars.filter(car => !car.available).length,
+      });
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchCars(1);
+  }, []);
+
+  useEffect(() => {
+    fetchTotalStats();
   }, []);
 
   // Pagination control functions
@@ -106,12 +161,12 @@ export default function AdminCars() {
     setDialogOpen(true);
   };
 
-  const handleEditCar = (car: Car) => {
+  const handleEditCar = (car: CarType) => {
     setSelectedCar(car);
     setDialogOpen(true);
   };
 
-  const handleDeleteCar = async (car: Car) => {
+  const handleDeleteCar = async (car: CarType) => {
     if (!window.confirm('Are you sure you want to delete this car?')) return;
 
     try {
@@ -131,6 +186,7 @@ export default function AdminCars() {
         description: `${car.name} has been deleted successfully.`,
       });
       fetchCars(currentPage);
+      fetchTotalStats(); // Refresh stats after deletion
     } catch (error) {
       console.error('Error deleting car:', error);
       toast({
@@ -141,7 +197,7 @@ export default function AdminCars() {
     }
   };
 
-  const handleSaveCar = async (carData: Partial<Car>) => {
+  const handleSaveCar = async (carData: Partial<CarType>) => {
     try {
       if (!token) throw new Error('Not authenticated');
       if (selectedCar) {
@@ -234,6 +290,7 @@ export default function AdminCars() {
 
       // Fetch fresh data in the background
       fetchCars(currentPage);
+      fetchTotalStats(); // Refresh stats after save
     } catch (error) {
       console.error('Error saving car:', error);
       
@@ -256,24 +313,96 @@ export default function AdminCars() {
   };
 
   return (
-    <div className="container mx-auto py-10">
-      <Card>
-        <div className="flex justify-between items-center p-6">
-          <div className="space-y-1">
-            <h2 className="text-2xl font-semibold tracking-tight text-card-foreground">Cars</h2>
-            <p className="text-sm text-muted-foreground">
-              Manage your car listings here.
-            </p>
-          </div>
-          <Button onClick={handleAddCar}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Car
-          </Button>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="space-y-2">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+            Cars Management
+          </h1>
+          <p className="text-muted-foreground">Manage your car inventory and listings</p>
         </div>
+        <Button 
+          onClick={handleAddCar}
+          className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/25"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add Car
+        </Button>
+      </div>
 
-        <CardContent>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="border-0 bg-gradient-to-br from-blue-500/10 to-blue-600/5 backdrop-blur-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                <Car className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Total Cars</p>
+                <p className="text-2xl font-bold text-blue-400">
+                  {statsLoading ? '...' : stats.total}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 bg-gradient-to-br from-green-500/10 to-green-600/5 backdrop-blur-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+                <CheckCircle className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Available</p>
+                <p className="text-2xl font-bold text-green-400">
+                  {statsLoading ? '...' : stats.available}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 bg-gradient-to-br from-purple-500/10 to-purple-600/5 backdrop-blur-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Featured</p>
+                <p className="text-2xl font-bold text-purple-400">
+                  {statsLoading ? '...' : stats.featured}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 bg-gradient-to-br from-red-500/10 to-red-600/5 backdrop-blur-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center">
+                <XCircle className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Unavailable</p>
+                <p className="text-2xl font-bold text-red-400">
+                  {statsLoading ? '...' : stats.unavailable}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Content Card */}
+      <Card className="border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur-sm">
+        <CardContent className="p-6">
           {error ? (
-            <div className="flex items-center gap-2 text-destructive mb-4">
+            <div className="flex items-center gap-2 text-destructive mb-6">
               <AlertCircle className="h-4 w-4" />
               <p>{error.error}</p>
             </div>
@@ -284,21 +413,21 @@ export default function AdminCars() {
             <div className={`transition-opacity duration-200 ${loading ? 'opacity-0' : 'opacity-100'}`}>
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Image</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Brand</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
+                  <TableRow className="border-border/50">
+                    <TableHead className="text-muted-foreground">Image</TableHead>
+                    <TableHead className="text-muted-foreground">Name</TableHead>
+                    <TableHead className="text-muted-foreground">Brand</TableHead>
+                    <TableHead className="text-muted-foreground">Category</TableHead>
+                    <TableHead className="text-muted-foreground">Price</TableHead>
+                    <TableHead className="text-muted-foreground">Status</TableHead>
+                    <TableHead className="text-muted-foreground">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {cars.map((car: Car, index: number) => (
-                    <TableRow key={car.id || `car-${index}`} className="transition-colors hover:bg-muted/50">
+                  {cars.map((car: CarType, index: number) => (
+                    <TableRow key={car.id || `car-${index}`} className="border-border/50 hover:bg-accent/50 transition-colors">
                       <TableCell>
-                        {car.images && car.images.length > 0 ? (
+                        {car.images && car.images.length > 0 && car.images[0] && car.images[0].trim() !== '' ? (
                           <div className="relative w-16 h-16 rounded-md overflow-hidden">
                             <Image
                               src={car.images[0]}
@@ -310,15 +439,15 @@ export default function AdminCars() {
                           </div>
                         ) : (
                           <div className="w-16 h-16 bg-muted rounded-md flex items-center justify-center">
-                            <span className="text-muted-foreground">No image</span>
+                            <span className="text-muted-foreground text-xs">No image</span>
                           </div>
                         )}
                       </TableCell>
-                      <TableCell>{car.name}</TableCell>
+                      <TableCell className="font-medium">{car.name}</TableCell>
                       <TableCell>
                         {car.brandId && typeof car.brandId === 'object' ? (
                           <div className="flex items-center gap-2">
-                            {(car.brandId as { logo: string; name: string }).logo && (
+                            {(car.brandId as { logo: string; name: string }).logo && (car.brandId as { logo: string; name: string }).logo.trim() !== '' ? (
                               <Image
                                 src={(car.brandId as { logo: string; name: string }).logo}
                                 alt={(car.brandId as { logo: string; name: string }).name}
@@ -326,7 +455,7 @@ export default function AdminCars() {
                                 height={24}
                                 className="rounded-full"
                               />
-                            )}
+                            ) : null}
                             <span>{(car.brandId as { logo: string; name: string }).name}</span>
                           </div>
                         ) : (
@@ -342,17 +471,17 @@ export default function AdminCars() {
                       <TableCell>
                         {car.discountedPrice && car.originalPrice ? (
                           <div className="flex flex-col">
-                            <span className="text-green-500">{car.discountedPrice.toLocaleString()}</span>
-                            <span className="text-gray-400 text-sm line-through">{car.originalPrice.toLocaleString()}</span>
+                            <span className="text-green-500 font-medium">AED {car.discountedPrice.toLocaleString()}</span>
+                            <span className="text-muted-foreground text-sm line-through">AED {car.originalPrice.toLocaleString()}</span>
                           </div>
                         ) : car.originalPrice ? (
-                          <span>{car.originalPrice.toLocaleString()}</span>
+                          <span className="font-medium">AED {car.originalPrice.toLocaleString()}</span>
                         ) : (
-                          <span className="text-gray-400">Price on request</span>
+                          <span className="text-muted-foreground">Price on request</span>
                         )}/day
                       </TableCell>
                       <TableCell>
-                        <span className={`px-2 py-1 rounded-full text-sm ${
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                           car.available
                             ? 'bg-green-500/20 text-green-600 dark:text-green-400' 
                             : 'bg-red-500/20 text-red-600 dark:text-red-400'
@@ -366,7 +495,7 @@ export default function AdminCars() {
                             variant="outline"
                             size="icon"
                             onClick={() => handleEditCar(car)}
-                            className="transition-colors hover:bg-primary hover:text-primary-foreground"
+                            className="transition-colors hover:bg-primary hover:text-primary-foreground border-border/50"
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -374,7 +503,7 @@ export default function AdminCars() {
                             variant="outline"
                             size="icon"
                             onClick={() => handleDeleteCar(car)}
-                            className="transition-colors hover:bg-destructive hover:text-destructive-foreground"
+                            className="transition-colors hover:bg-destructive hover:text-destructive-foreground border-border/50"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -402,26 +531,6 @@ export default function AdminCars() {
                 Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalCars)} of {totalCars} cars
               </div>
 
-              {/* Page Size Selector */}
-              {/* <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Show:</span>
-                <select
-                  value={pageSize}
-                  onChange={(e) => {
-                    const newPageSize = parseInt(e.target.value);
-                    setPageSize(newPageSize);
-                    setCurrentPage(1); // Reset to first page when changing page size
-                    fetchCars(1); // Fetch with new page size
-                  }}
-                  className="border border-input bg-background px-2 py-1 rounded-md text-sm"
-                >
-                  <option value={6}>6 per page</option>
-                  <option value={12}>12 per page</option>
-                  <option value={24}>24 per page</option>
-                  <option value={48}>48 per page</option>
-                </select>
-              </div> */}
-
               {/* Pagination Buttons */}
               <div className="flex items-center gap-2">
                 {/* First Page */}
@@ -430,7 +539,7 @@ export default function AdminCars() {
                   size="sm"
                   onClick={goToFirstPage}
                   disabled={!canGoPrevious}
-                  className="h-8 w-8 p-0"
+                  className="h-8 w-8 p-0 border-border/50"
                 >
                   <ChevronsLeft className="h-4 w-4" />
                 </Button>
@@ -441,7 +550,7 @@ export default function AdminCars() {
                   size="sm"
                   onClick={goToPreviousPage}
                   disabled={!canGoPrevious}
-                  className="h-8 w-8 p-0"
+                  className="h-8 w-8 p-0 border-border/50"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
@@ -466,7 +575,7 @@ export default function AdminCars() {
                         variant={currentPage === pageNum ? "default" : "outline"}
                         size="sm"
                         onClick={() => goToPage(pageNum)}
-                        className="h-8 w-8 p-0"
+                        className="h-8 w-8 p-0 border-border/50"
                       >
                         {pageNum}
                       </Button>
@@ -480,7 +589,7 @@ export default function AdminCars() {
                   size="sm"
                   onClick={goToNextPage}
                   disabled={!canGoNext}
-                  className="h-8 w-8 p-0"
+                  className="h-8 w-8 p-0 border-border/50"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
@@ -491,7 +600,7 @@ export default function AdminCars() {
                   size="sm"
                   onClick={goToLastPage}
                   disabled={!canGoNext}
-                  className="h-8 w-8 p-0"
+                  className="h-8 w-8 p-0 border-border/50"
                 >
                   <ChevronsRight className="h-4 w-4" />
                 </Button>
@@ -502,12 +611,12 @@ export default function AdminCars() {
           {/* Empty State */}
           {!loading && cars.length === 0 && (
             <div className="text-center py-12">
-              <div className="text-muted-foreground mb-4">
-                <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-semibold mb-2">No cars found</h3>
-                <p className="text-sm">Get started by adding your first car.</p>
+              <div className="w-16 h-16 bg-gradient-to-br from-muted to-muted/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Car className="w-8 h-8 text-muted-foreground" />
               </div>
-              <Button onClick={handleAddCar}>
+              <h3 className="text-lg font-semibold mb-2 text-muted-foreground">No cars found</h3>
+              <p className="text-sm text-muted-foreground/70 mb-4">Get started by adding your first car.</p>
+              <Button onClick={handleAddCar} className="bg-gradient-to-r from-primary to-primary/80">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Your First Car
               </Button>

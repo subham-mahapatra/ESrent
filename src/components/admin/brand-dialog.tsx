@@ -148,7 +148,7 @@ export function BrandDialog({ brand, open, onOpenChange, onSave }: BrandDialogPr
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-card-foreground">Brand Logo</h3>
             <div className="flex items-center gap-4">
-              {previewLogo ? (
+              {previewLogo && typeof previewLogo === 'string' && previewLogo.trim() !== '' && previewLogo !== 'null' && previewLogo !== 'undefined' ? (
                 <div className="relative w-24 h-24 rounded-lg overflow-hidden border">
                   <Image
                     src={previewLogo}

@@ -3,7 +3,7 @@ import { BrandService, BrandFilters, BrandSearchOptions } from '@/lib/services/b
 import { requireAdmin } from '@/lib/middleware/auth';
 
 export async function GET(request: NextRequest) {
-  console.log("try")
+  // console.log("try")
   try {
     const { searchParams } = new URL(request.url);
     
@@ -22,12 +22,12 @@ export async function GET(request: NextRequest) {
     if (searchParams.get('sortOrder')) searchOptions.sortOrder = searchParams.get('sortOrder') as 'asc' | 'desc';
 
     const result = await BrandService.getAllBrands(filters, searchOptions);
-    console.log('API /api/brands response:', {
-      data: result.brands,
-      total: result.total,
-      page: result.page,
-      totalPages: result.totalPages
-    });
+    // console.log('API /api/brands response:', {
+    //   data: result.brands,
+    //   total: result.total,
+    //   page: result.page,
+    //   totalPages: result.totalPages
+    // });
     // Patch: return { data, total, page, totalPages } to match frontend expectation
     return NextResponse.json({
       data: result.brands,

@@ -4,7 +4,7 @@ import { requireAdmin } from '@/lib/middleware/auth';
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('GET /api/cars called');
+    // console.log('GET /api/cars called');
     const { searchParams } = new URL(request.url);
     
     // Parse filters
@@ -35,11 +35,11 @@ export async function GET(request: NextRequest) {
     if (searchParams.get('sortBy')) searchOptions.sortBy = searchParams.get('sortBy')!;
     if (searchParams.get('sortOrder')) searchOptions.sortOrder = searchParams.get('sortOrder') as 'asc' | 'desc';
 
-    console.log('Filters:', filters);
-    console.log('Search Options:', searchOptions);
+    // console.log('Filters:', filters);
+    // console.log('Search Options:', searchOptions);
 
     const result = await CarService.getAllCars(filters, searchOptions);
-    console.log('GET /api/cars result:', result);
+    // console.log('GET /api/cars result:', result);
     
     return NextResponse.json({
       data: result.cars,
@@ -59,13 +59,13 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('POST /api/cars called');
+    // console.log('POST /api/cars called');
     // Check authentication
     const authResult = await requireAdmin(request);
     if (authResult) return authResult;
 
     const body = await request.json();
-    console.log('POST /api/cars body:', body);
+    // console.log('POST /api/cars body:', body);
     
     // Validate required fields with specific error messages
     const requiredFields = [

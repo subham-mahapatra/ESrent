@@ -18,7 +18,7 @@ export default function AdminLogin() {
     setLoading(true);
     try {
       const result = await login(email, password);
-      console.log('Login result:', result);
+      // console.log('Login result:', result);
       if (!result.success) {
         setError(result.error || 'Invalid email or password');
       }

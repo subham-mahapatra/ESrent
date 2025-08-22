@@ -68,39 +68,39 @@ export function useApi<T>(
     if (cacheKey) {
       const count = (apiCallCounts.get(cacheKey) || 0) + 1;
       apiCallCounts.set(cacheKey, count);
-      console.log(`API Call #${count} for ${cacheKey}`);
+      // console.log(`API Call #${count} for ${cacheKey}`);
     }
 
     // Check cache first
     if (cacheKey && !forceRefresh) {
       const cached = apiCache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-        console.log(`Cache hit for ${cacheKey}`);
+        // console.log(`Cache hit for ${cacheKey}`);
         setState({ data: cached.data as T, loading: false, error: null });
         return;
       }
     }
 
-    console.log(`Fetching data for ${cacheKey}`);
+    // console.log(`Fetching data for ${cacheKey}`);
     setState(prev => ({ ...prev, loading: true, error: null }));
-    console.log('fetchData: set loading true');
+    // console.log('fetchData: set loading true');
     
     try {
-      console.log('fetchData: calling memoizedApiCall');
+      // console.log('fetchData: calling memoizedApiCall');
       const data = await memoizedApiCall();
-      console.log('fetchData: API call resolved', data);
+      // console.log('fetchData: API call resolved', data);
       
       if (isMountedRef.current) {
         setState({ data, loading: false, error: null });
-        console.log('fetchData: set state with data', data);
+        // console.log('fetchData: set state with data', data);
         
         // Cache the result
         if (cacheKey) {
           apiCache.set(cacheKey, { data, timestamp: Date.now() });
-          console.log(`Cached data for ${cacheKey}`);
+          // console.log(`Cached data for ${cacheKey}`);
         }
       } else {
-        console.log('fetchData: not mounted, skipping setState');
+        // console.log('fetchData: not mounted, skipping setState');
       }
     } catch (error) {
       console.error('fetchData: API error', error);
@@ -110,9 +110,9 @@ export function useApi<T>(
           loading: false,
           error: error instanceof Error ? error.message : 'An error occurred',
         });
-        console.log('fetchData: set state with error', error);
+        // console.log('fetchData: set state with error', error);
       } else {
-        console.log('fetchData: not mounted, skipping setState (error)');
+        // console.log('fetchData: not mounted, skipping setState (error)');
       }
     }
   }, [memoizedApiCall, cacheKey, apiCall]);

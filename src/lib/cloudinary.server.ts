@@ -37,11 +37,11 @@ export class CloudinaryService {
         ...(options.public_id && { public_id: options.public_id }),
       };
 
-      console.log('Uploading to Cloudinary with options:', { folder, transformation: uploadOptions.transformation });
+      // console.log('Uploading to Cloudinary with options:', { folder, transformation: uploadOptions.transformation });
       
       const result = await cloudinary.uploader.upload(file as string, uploadOptions);
       
-      console.log('Cloudinary upload successful:', { public_id: result.public_id, url: result.secure_url });
+      // console.log('Cloudinary upload successful:', { public_id: result.public_id, url: result.secure_url });
       
       return {
         url: result.secure_url,

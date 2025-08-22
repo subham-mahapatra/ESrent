@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useCar, useCategories, useBrand } from "@/hooks/useApi"
+import { ReviewSection } from "./ReviewSection"
 import {
   ArrowLeft,
   Calendar,
@@ -80,12 +81,12 @@ export default function CarDetails() {
   // Debug brand data
   useEffect(() => {
     if (brandData) {
-      console.log('Brand data:', brandData);
-      console.log('Car brandId:', (car as any)?.brandId);
+          // console.log('Brand data:', brandData);
+          // console.log('Car brandId:', (car as any)?.brandId);
       if (brandData.data && Array.isArray(brandData.data)) {
         const brand = brandData.data.find(b => b.id === (car as any)?.brandId);
-        console.log('Found brand:', brand);
-        console.log('Brand logo URL:', brand?.logo);
+        // console.log('Found brand:', brand);
+        // console.log('Brand logo URL:', brand?.logo);
       }
     }
   }, [brandData, car]);
@@ -530,6 +531,11 @@ export default function CarDetails() {
             />
           </div>
         )}
+
+        {/* Reviews Section */}
+        <div className="mt-12 w-full max-w-7xl mx-auto px-4">
+          <ReviewSection carId={carId} />
+        </div>
       </div>
 
       {/* Floating Bar at Bottom */}
