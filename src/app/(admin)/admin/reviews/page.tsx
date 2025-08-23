@@ -10,6 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/hooks/use-toast';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import LinkExtension from '@tiptap/extension-link';
+import TextAlign from '@tiptap/extension-text-align';
+import Placeholder from '@tiptap/extension-placeholder';
 import { 
   Star, 
   Check, 
@@ -27,7 +32,16 @@ import {
   Clock,
   Eye,
   ThumbsUp,
-  ThumbsDown
+  ThumbsDown,
+  Bold,
+  Italic,
+  Underline,
+  List,
+  ListOrdered,
+  Link as LinkIcon,
+  AlignLeft,
+  AlignCenter,
+  AlignRight
 } from 'lucide-react';
 
 interface Review {
@@ -76,6 +90,34 @@ export default function ReviewsPage() {
     comment: ''
   });
   const { toast } = useToast();
+
+  // TipTap Editor for comment field
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      LinkExtension.configure({
+        openOnClick: false,
+      }),
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+      }),
+      Placeholder.configure({
+        placeholder: 'Review comment... Use the toolbar above to format your text.',
+      }),
+    ],
+    content: createForm.comment || '',
+    onUpdate: ({ editor }) => {
+      setCreateForm(prev => ({ ...prev, comment: editor.getHTML() }));
+    },
+    immediatelyRender: false,
+  });
+
+  // Update editor content when createForm.comment changes
+  useEffect(() => {
+    if (editor && createForm.comment !== editor.getHTML()) {
+      editor.commands.setContent(createForm.comment || '');
+    }
+  }, [editor, createForm.comment]);
 
   const fetchReviews = async () => {
     try {
@@ -181,6 +223,12 @@ export default function ReviewsPage() {
           title: '',
           comment: ''
         });
+        
+        // Reset editor
+        if (editor) {
+          editor.commands.setContent('');
+        }
+        
         fetchReviews();
       } else {
         toast({
@@ -395,14 +443,162 @@ export default function ReviewsPage() {
 
                 <div>
                   <Label className="text-sm font-medium">Comment *</Label>
-                  <Textarea
-                    value={createForm.comment}
-                    onChange={(e) => setCreateForm(prev => ({ ...prev, comment: e.target.value }))}
-                    placeholder="Review comment"
-                    maxLength={1000}
-                    rows={4}
-                    className="bg-background/50 border-border/50"
-                  />
+                  <div className="space-y-2">
+                    {/* TipTap Editor Toolbar */}
+                    <div className="border border-border/50 rounded-t-md p-2 bg-muted/50 flex flex-wrap gap-1">
+                      {/* Text Size Dropdown */}
+                      <Select
+                        onValueChange={(value) => {
+                          if (value === 'h1') {
+                            editor?.chain().focus().toggleHeading({ level: 1 }).run();
+                          } else if (value === 'h2') {
+                            editor?.chain().focus().toggleHeading({ level: 2 }).run();
+                          } else if (value === 'h3') {
+                            editor?.chain().focus().toggleHeading({ level: 3 }).run();
+                          } else if (value === 'p') {
+                            editor?.chain().focus().setParagraph().run();
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="h-8 w-20 text-xs">
+                          <SelectValue placeholder="Size" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="h1">H1</SelectItem>
+                          <SelectItem value="h2">H2</SelectItem>
+                          <SelectItem value="h3">H3</SelectItem>
+                          <SelectItem value="p">Text</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <div className="w-px h-6 bg-border mx-1" />
+                      <Button
+                        type="button"
+                        variant={editor?.isActive('bold') ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => editor?.chain().focus().toggleBold().run()}
+                        className="h-8 w-8 p-0"
+                        title="Bold"
+                      >
+                        <Bold className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={editor?.isActive('italic') ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => editor?.chain().focus().toggleItalic().run()}
+                        className="h-8 w-8 p-0"
+                        title="Italic"
+                      >
+                        <Italic className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={editor?.isActive('underline') ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => editor?.chain().focus().toggleUnderline().run()}
+                        className="h-8 w-8 p-0"
+                        title="Underline"
+                      >
+                        <Underline className="h-4 w-4" />
+                      </Button>
+                      <div className="w-px h-6 bg-border mx-1" />
+                      <Button
+                        type="button"
+                        variant={editor?.isActive('bulletList') ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => editor?.chain().focus().toggleBulletList().run()}
+                        className="h-8 w-8 p-0"
+                        title="Bullet List"
+                      >
+                        <List className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={editor?.isActive('orderedList') ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => editor?.chain().focus().toggleOrderedList().run()}
+                        className="h-8 w-8 p-0"
+                        title="Numbered List"
+                      >
+                        <ListOrdered className="h-4 w-4" />
+                      </Button>
+                      <div className="w-px h-6 bg-border mx-1" />
+                      <Button
+                        type="button"
+                        variant={editor?.isActive('link') ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => {
+                          const url = prompt('Enter URL:');
+                          if (url) {
+                            editor?.chain().focus().setLink({ href: url }).run();
+                          }
+                        }}
+                        className="h-8 w-8 p-0"
+                        title="Insert Link"
+                      >
+                        <LinkIcon className="h-4 w-4" />
+                      </Button>
+                      <div className="w-px h-6 bg-border mx-1" />
+                      <Button
+                        type="button"
+                        variant={editor?.isActive({ textAlign: 'left' }) ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => editor?.chain().focus().setTextAlign('left').run()}
+                        className="h-8 w-8 p-0"
+                        title="Align Left"
+                      >
+                        <AlignLeft className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={editor?.isActive({ textAlign: 'center' }) ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => editor?.chain().focus().setTextAlign('center').run()}
+                        className="h-8 w-8 p-0"
+                        title="Align Center"
+                      >
+                        <AlignCenter className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={editor?.isActive({ textAlign: 'right' }) ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => editor?.chain().focus().setTextAlign('right').run()}
+                        className="h-8 w-8 p-0"
+                        title="Align Right"
+                      >
+                        <AlignRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    
+                    {/* TipTap Editor Content */}
+                    <div className="border border-border/50 rounded-b-md bg-background">
+                      <EditorContent 
+                        editor={editor} 
+                        className="min-h-[100px] max-h-[200px] overflow-y-auto p-3 focus:outline-none"
+                        style={{
+                          '--tw-prose-body': 'inherit',
+                          '--tw-prose-headings': 'inherit',
+                          '--tw-prose-links': 'inherit',
+                          '--tw-prose-bold': 'inherit',
+                          '--tw-prose-counters': 'inherit',
+                          '--tw-prose-bullets': 'inherit',
+                          '--tw-prose-hr': 'inherit',
+                          '--tw-prose-quotes': 'inherit',
+                          '--tw-prose-quote-borders': 'inherit',
+                          '--tw-prose-captions': 'inherit',
+                          '--tw-prose-code': 'inherit',
+                          '--tw-prose-pre-code': 'inherit',
+                          '--tw-prose-pre-bg': 'inherit',
+                          '--tw-prose-th-borders': 'inherit',
+                          '--tw-prose-td-borders': 'inherit',
+                        } as React.CSSProperties}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Use the toolbar above to format your text. The content will be saved as HTML.
+                    </p>
+                  </div>
                 </div>
 
                 <div className="flex justify-end gap-3">
