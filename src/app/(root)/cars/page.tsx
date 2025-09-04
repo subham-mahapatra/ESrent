@@ -24,7 +24,7 @@ export default function CarsPage() {
     types: [],
     tags: [],
     transmission: '',
-    maxPrice: 10000,
+    maxPrice: 10000000,
   })
   const [shouldResetFilters, setShouldResetFilters] = useState(false)
   
@@ -69,7 +69,7 @@ export default function CarsPage() {
   };
 
   // Use API hook for cars
-  const { data: carsData, loading: carsLoading } = useCars({ limit: 100 });
+  const { data: carsData, loading: carsLoading } = useCars({ limit: 1000 });
   const { data: categoriesData, loading: categoriesLoading } = useCategories();
   const categories = useMemo(() => categoriesData?.data || [], [categoriesData]);
 
@@ -164,7 +164,7 @@ export default function CarsPage() {
       types: [],
       tags: [],
       transmission: '',
-      maxPrice: 10000,
+      maxPrice: 10000000,
     })
     setFilteredCars(cars)
     setCurrentPage(1)

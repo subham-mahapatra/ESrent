@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Star, Send } from 'lucide-react';
-import { useToast } from '../hooks/use-toast';
+import { useCreateReview } from '@/hooks/useReactQuery';
 
 interface ReviewFormProps {
   carId: string;
@@ -21,45 +21,29 @@ export function ReviewForm({ carId, onReviewSubmitted }: ReviewFormProps) {
     title: '',
     comment: ''
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [hoveredRating, setHoveredRating] = useState(0);
-  const { toast } = useToast();
+  
+  // Use React Query mutation hook
+  const createReviewMutation = useCreateReview();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.userName || !formData.rating || !formData.title || !formData.comment) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "destructive"
-      });
-      return;
+      return; // Validation is handled by the mutation hook
     }
 
-    setIsSubmitting(true);
-    
-    try {
-      const response = await fetch('/api/reviews', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          carId,
-          ...formData
-        }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        toast({
-          title: "Success",
-          description: result.message || "Review submitted successfully!",
-        });
-        
-        // Reset form
+    // Submit review using React Query mutation
+    createReviewMutation.mutate({
+      carId,
+      rating: formData.rating,
+      comment: formData.comment,
+      title: formData.title,
+      userName: formData.userName,
+      userEmail: formData.userEmail,
+    }, {
+      onSuccess: () => {
+        // Reset form on success
         setFormData({
           userName: '',
           userEmail: '',
@@ -68,28 +52,17 @@ export function ReviewForm({ carId, onReviewSubmitted }: ReviewFormProps) {
           comment: ''
         });
         
+        // Call the callback
         onReviewSubmitted?.();
-      } else {
-        toast({
-          title: "Error",
-          description: result.error || "Failed to submit review",
-          variant: "destructive"
-        });
       }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to submit review. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    });
   };
 
   const handleRatingClick = (rating: number) => {
     setFormData(prev => ({ ...prev, rating }));
   };
+
+  const isSubmitting = createReviewMutation.isPending;
 
   return (
     <div className="bg-gray-800/50 rounded-xl border border-gray-700 p-6 backdrop-blur-sm">
@@ -106,6 +79,7 @@ export function ReviewForm({ carId, onReviewSubmitted }: ReviewFormProps) {
               className="bg-gray-700/50 border-gray-600 text-white"
               placeholder="Your name"
               required
+              disabled={isSubmitting}
             />
           </div>
           
@@ -118,6 +92,7 @@ export function ReviewForm({ carId, onReviewSubmitted }: ReviewFormProps) {
               onChange={(e) => setFormData(prev => ({ ...prev, userEmail: e.target.value }))}
               className="bg-gray-700/50 border-gray-600 text-white"
               placeholder="Your email (optional)"
+              disabled={isSubmitting}
             />
           </div>
         </div>
@@ -132,7 +107,8 @@ export function ReviewForm({ carId, onReviewSubmitted }: ReviewFormProps) {
                 onClick={() => handleRatingClick(star)}
                 onMouseEnter={() => setHoveredRating(star)}
                 onMouseLeave={() => setHoveredRating(0)}
-                className="transition-colors"
+                className="transition-colors disabled:opacity-50"
+                disabled={isSubmitting}
               >
                 <Star
                   className={`w-8 h-8 ${
@@ -159,6 +135,7 @@ export function ReviewForm({ carId, onReviewSubmitted }: ReviewFormProps) {
             placeholder="Brief summary of your experience"
             maxLength={100}
             required
+            disabled={isSubmitting}
           />
         </div>
 
@@ -172,6 +149,7 @@ export function ReviewForm({ carId, onReviewSubmitted }: ReviewFormProps) {
             placeholder="Share your detailed experience with this car..."
             maxLength={1000}
             required
+            disabled={isSubmitting}
           />
           <p className="text-sm text-gray-400 mt-1">
             {formData.comment.length}/1000 characters
@@ -195,6 +173,13 @@ export function ReviewForm({ carId, onReviewSubmitted }: ReviewFormProps) {
             </div>
           )}
         </Button>
+
+        {/* Error display */}
+        {createReviewMutation.isError && (
+          <div className="text-red-400 text-sm text-center">
+            {createReviewMutation.error?.message || 'Failed to submit review. Please try again.'}
+          </div>
+        )}
       </form>
     </div>
   );

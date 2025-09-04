@@ -62,6 +62,104 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 // Import API hooks
 import { useCars, useBrands, useCategories } from '@/hooks/useApi';
 
+function LandingSkeleton() {
+  return (
+    <div className="space-y-12">
+      {/* Hero skeleton */}
+      <div className="relative w-full overflow-hidden">
+        <Card className="w-full h-72 sm:h-96 md:h-[28rem] bg-gray-800/60 border-gray-700">
+          <div className="w-full h-full">
+            <Skeleton className="w-full h-full bg-gray-700" />
+          </div>
+          <div className="absolute inset-0 p-6 sm:p-10 flex flex-col justify-end gap-3 bg-gradient-to-t from-black/60 via-black/20 to-transparent">
+            <Skeleton className="h-8 w-3/4 sm:w-1/2 bg-gray-600" />
+            <Skeleton className="h-4 w-2/3 sm:w-1/3 bg-gray-600" />
+            <div className="flex gap-2 pt-2">
+              <Skeleton className="h-10 w-28 bg-gray-600" />
+              <Skeleton className="h-10 w-28 bg-gray-600" />
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Featured Brands section title */}
+      <div className="px-1">
+        <Skeleton className="h-6 w-40 bg-gray-700 mb-3" />
+        <div className="flex gap-4 overflow-x-auto pb-2">
+          {[...Array(8)].map((_, i) => (
+            <Card key={`brand-skel-${i}`} className="w-40 h-24 flex-shrink-0 flex items-center justify-center bg-gray-800/60 border-gray-700">
+              <Skeleton className="w-16 h-16 rounded-full bg-gray-700" />
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      {/* Featured Vehicles section title */}
+      <div className="px-1">
+        <Skeleton className="h-6 w-48 bg-gray-700 mb-4" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {[...Array(9)].map((_, i) => (
+            <Card key={`car-skel-${i}`} className="h-72 bg-gray-800/60 border-gray-700 flex flex-col">
+              <div className="relative">
+                <Skeleton className="h-44 w-full rounded-t-xl bg-gray-700" />
+                <div className="absolute top-3 left-3 flex gap-2">
+                  <Skeleton className="h-6 w-16 rounded-full bg-gray-600" />
+                  <Skeleton className="h-6 w-20 rounded-full bg-gray-600" />
+                </div>
+              </div>
+              <div className="p-4 space-y-2">
+                <Skeleton className="h-6 w-3/4 bg-gray-700" />
+                <div className="flex gap-3">
+                  <Skeleton className="h-4 w-16 bg-gray-700" />
+                  <Skeleton className="h-4 w-16 bg-gray-700" />
+                  <Skeleton className="h-4 w-20 bg-gray-700" />
+                </div>
+                <div className="flex items-center justify-between pt-1">
+                  <Skeleton className="h-5 w-24 bg-gray-700" />
+                  <Skeleton className="h-9 w-24 bg-gray-700" />
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      {/* Categories section title */}
+      <div className="px-1">
+        <Skeleton className="h-6 w-40 bg-gray-700 mb-3" />
+        <div className="flex gap-3 overflow-x-auto pb-2">
+          {[...Array(12)].map((_, i) => (
+            <Skeleton key={`cat-chip-${i}`} className="h-9 w-28 rounded-full bg-gray-700" />
+          ))}
+        </div>
+      </div>
+
+      {/* Testimonials heading & cards */}
+      <div className="px-1">
+        <Skeleton className="h-6 w-48 bg-gray-700 mb-4" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {[...Array(3)].map((_, i) => (
+            <Card key={`testi-skel-${i}`} className="h-48 bg-gray-800/60 border-gray-700 p-4">
+              <div className="flex items-start gap-3">
+                <Skeleton className="h-10 w-10 rounded-full bg-gray-700" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-5 w-1/2 bg-gray-700" />
+                  <Skeleton className="h-4 w-3/4 bg-gray-700" />
+                  <Skeleton className="h-4 w-2/3 bg-gray-700" />
+                </div>
+              </div>
+              <div className="mt-4 flex gap-2">
+                <Skeleton className="h-4 w-14 bg-gray-700" />
+                <Skeleton className="h-4 w-20 bg-gray-700" />
+              </div>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function FeaturedContent() {
   // Memoize the API parameters to prevent unnecessary re-renders
   const carsParams = useMemo(() => ({ limit: 1000 }), []); // fetch all cars (featured and non-featured)
@@ -139,43 +237,7 @@ function FeaturedContent() {
   }
 
   if (loading) {
-    return (
-      <div className="space-y-12">
-        {/* Featured Brands Skeleton */}
-        <div className="mb-8">
-          <div className="flex gap-4 overflow-x-auto pb-2">
-            {[...Array(6)].map((_, i) => (
-              <Card key={i} className="w-40 h-24 flex-shrink-0 flex items-center justify-center bg-gray-800/60 border-gray-700">
-                <Skeleton className="w-16 h-16 rounded-full bg-gray-700" />
-              </Card>
-            ))}
-          </div>
-        </div>
-        {/* Featured Vehicles Skeleton */}
-        <div className="mb-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <Card key={i} className="h-64 bg-gray-800/60 border-gray-700 flex flex-col">
-              <Skeleton className="h-40 w-full rounded-t-xl bg-gray-700" />
-              <div className="p-4 space-y-2">
-                <Skeleton className="h-6 w-3/4 bg-gray-700" />
-                <Skeleton className="h-4 w-1/2 bg-gray-700" />
-                <Skeleton className="h-4 w-1/3 bg-gray-700" />
-              </div>
-            </Card>
-          ))}
-        </div>
-        {/* Categories Skeleton */}
-        <div className="mb-8">
-          <div className="flex gap-4 overflow-x-auto pb-2">
-            {[...Array(8)].map((_, i) => (
-              <Card key={i} className="w-32 h-16 flex-shrink-0 flex items-center justify-center bg-gray-800/60 border-gray-700">
-                <Skeleton className="w-20 h-6 bg-gray-700" />
-              </Card>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
+    return <LandingSkeleton />;
   }
 
   return (
@@ -239,43 +301,7 @@ export default function HomeScreen() {
         <HeroSection />
         <main className="flex-1 max-w-7xl mx-auto w-full p-4">
           <ErrorBoundary>
-            <Suspense fallback={
-              <div className="space-y-12">
-                {/* Featured Brands Skeleton */}
-                <div className="mb-8">
-                  <div className="flex gap-4 overflow-x-auto pb-2">
-                    {[...Array(6)].map((_, i) => (
-                      <Card key={i} className="w-40 h-24 flex-shrink-0 flex items-center justify-center bg-gray-800/60 border-gray-700">
-                        <Skeleton className="w-16 h-16 rounded-full bg-gray-700" />
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-                {/* Featured Vehicles Skeleton */}
-                <div className="mb-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                  {[...Array(6)].map((_, i) => (
-                    <Card key={i} className="h-64 bg-gray-800/60 border-gray-700 flex flex-col">
-                      <Skeleton className="h-40 w-full rounded-t-xl bg-gray-700" />
-                      <div className="p-4 space-y-2">
-                        <Skeleton className="h-6 w-3/4 bg-gray-700" />
-                        <Skeleton className="h-4 w-1/2 bg-gray-700" />
-                        <Skeleton className="h-4 w-1/3 bg-gray-700" />
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-                {/* Categories Skeleton */}
-                <div className="mb-8">
-                  <div className="flex gap-4 overflow-x-auto pb-2">
-                    {[...Array(8)].map((_, i) => (
-                      <Card key={i} className="w-32 h-16 flex-shrink-0 flex items-center justify-center bg-gray-800/60 border-gray-700">
-                        <Skeleton className="w-20 h-6 bg-gray-700" />
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            }>
+            <Suspense fallback={<LandingSkeleton />}>
               <FeaturedContent />
             </Suspense>
           </ErrorBoundary>

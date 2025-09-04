@@ -16,6 +16,16 @@ export interface UploadResult {
   format: string;
 }
 
+export interface VideoUploadResult {
+  url: string;
+  public_id: string;
+  secure_url: string;
+  width: number;
+  height: number;
+  format: string;
+  duration: number;
+}
+
 export class CloudinaryService {
   static async uploadImage(
     file: Buffer | string,
@@ -39,7 +49,17 @@ export class CloudinaryService {
 
       // console.log('Uploading to Cloudinary with options:', { folder, transformation: uploadOptions.transformation });
       
-      const result = await cloudinary.uploader.upload(file as string, uploadOptions);
+      // Convert Buffer to data URL if needed
+      let uploadData: string;
+      if (Buffer.isBuffer(file)) {
+        const base64 = file.toString('base64');
+        const mimeType = 'image/jpeg'; // Default mime type for images
+        uploadData = `data:${mimeType};base64,${base64}`;
+      } else {
+        uploadData = file as string;
+      }
+      
+      const result = await cloudinary.uploader.upload(uploadData, uploadOptions);
       
       // console.log('Cloudinary upload successful:', { public_id: result.public_id, url: result.secure_url });
       
@@ -67,5 +87,54 @@ export class CloudinaryService {
   static async deleteImage(public_id: string): Promise<unknown> {
     return cloudinary.uploader.destroy(public_id);
   }
-  // ... (add other methods if needed)
+
+  static async uploadVideo(
+    file: Buffer | string,
+    folder: string = 'esrent',
+    options: { transformation?: Record<string, unknown>; public_id?: string } = {}
+  ): Promise<VideoUploadResult> {
+    try {
+      // Validate Cloudinary configuration
+      if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 
+          !process.env.CLOUDINARY_API_KEY || 
+          !process.env.CLOUDINARY_API_SECRET) {
+        throw new Error('Cloudinary configuration is missing. Please check your environment variables.');
+      }
+
+      const uploadOptions = {
+        folder,
+        resource_type: 'video' as const,
+        transformation: options.transformation || { quality: 'auto', fetch_format: 'auto' },
+        ...(options.public_id && { public_id: options.public_id }),
+      };
+
+      // Convert Buffer to data URL if needed
+      let uploadData: string;
+      if (Buffer.isBuffer(file)) {
+        const base64 = file.toString('base64');
+        const mimeType = 'video/mp4'; // Default mime type for videos
+        uploadData = `data:${mimeType};base64,${base64}`;
+      } else {
+        uploadData = file as string;
+      }
+
+      const result = await cloudinary.uploader.upload(uploadData, uploadOptions);
+      
+      return {
+        url: result.secure_url,
+        public_id: result.public_id,
+        secure_url: result.secure_url,
+        width: result.width,
+        height: result.height,
+        format: result.format,
+        duration: result.duration || 0,
+      };
+    } catch (error) {
+      console.error('Cloudinary video upload error:', error);
+      if (error instanceof Error) {
+        throw new Error(`Cloudinary video upload failed: ${error.message}`);
+      }
+      throw new Error('Cloudinary video upload failed: Unknown error');
+    }
+  }
 }

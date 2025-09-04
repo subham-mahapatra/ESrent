@@ -18,7 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { uploadImage } from '@/lib/cloudinary';
-import { Image as ImageIcon, X, Loader2, Bold, Italic, Underline, List, ListOrdered, Link as LinkIcon, AlignLeft, AlignCenter, AlignRight, ChevronDown } from 'lucide-react';
+import { Image as ImageIcon, X, Loader2, Bold, Italic, Underline, List, ListOrdered, Link as LinkIcon, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import LinkExtension from '@tiptap/extension-link';
@@ -28,6 +28,10 @@ import Image from 'next/image';
 import { useBrands, useCategories } from '@/hooks/useApi';
 import { Category } from '@/types/category';
 import { useToast } from '@/components/hooks/use-toast';
+import { FormErrorDisplay, FieldError } from '@/components/ui/form-error';
+import { useApiError } from '@/hooks/useApiError';
+import { useFormValidation } from '@/hooks/useFormValidation';
+import { commonValidationRules } from '@/components/ui/form-validation';
 
 interface CarDialogProps {
   car?: Car;
@@ -53,33 +57,136 @@ const defaultCar: Partial<Car> = {
 };
 
 export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
-  const [formData, setFormData] = useState<Partial<Car>>(car || defaultCar);
   const [uploading, setUploading] = useState(false);
   const [previewImages, setPreviewImages] = useState<string[]>(car?.images || []);
   const [coverImageIndex, setCoverImageIndex] = useState<number>(0);
-  const [tagsInput, setTagsInput] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { error: apiError, handleApiError, clearError: clearApiError } = useApiError();
+
+  const validationRules = {
+    name: {
+      ...commonValidationRules.required('Car name is required'),
+      ...commonValidationRules.minLength(2, 'Car name must be at least 2 characters'),
+      ...commonValidationRules.maxLength(100, 'Car name must be no more than 100 characters')
+    },
+    brand: {
+      ...commonValidationRules.required('Brand is required')
+    },
+    model: {
+      ...commonValidationRules.required('Model is required'),
+      ...commonValidationRules.minLength(1, 'Model must be at least 1 character'),
+      ...commonValidationRules.maxLength(50, 'Model must be no more than 50 characters')
+    },
+    originalPrice: {
+      ...commonValidationRules.required('Original price is required'),
+      ...commonValidationRules.positiveNumber('Original price must be greater than 0')
+    },
+    discountedPrice: {
+      custom: (value: number) => {
+        if (value && value > 0) {
+          // This will be validated against originalPrice in the form validation
+          return null;
+        }
+        return null; // Optional field
+      }
+    },
+    carTypeIds: {
+      custom: (value: string[]) => {
+        if (!value || value.length === 0) {
+          return 'Car type is required';
+        }
+        return null;
+      }
+    },
+    images: {
+      custom: (value: string[]) => {
+        if (!value || value.length === 0) {
+          return 'At least one image is required';
+        }
+        return null;
+      }
+    },
+    description: {
+      ...commonValidationRules.required('Description is required'),
+      ...commonValidationRules.minLength(10, 'Description must be at least 10 characters'),
+      ...commonValidationRules.maxLength(2000, 'Description must be no more than 2000 characters')
+    }
+  };
+
+  const {
+    data: formData,
+    errors,
+    isSubmitting,
+    isValid,
+    setField,
+    setError,
+    handleSubmit: handleFormSubmit,
+    reset
+  } = useFormValidation({
+    initialData: car || defaultCar,
+    validationRules,
+    onSubmit: async (data) => {
+      try {
+        // Additional validation for discounted price
+        if (data.discountedPrice && data.originalPrice && data.discountedPrice >= data.originalPrice) {
+          setError('discountedPrice', 'Discounted price must be less than the original price');
+          return;
+        }
+
+        // Process keywords from raw input
+        const rawKeywords = data.keywords?.[0] || '';
+        const processedKeywords = rawKeywords
+          .split(',')
+          .map(k => k.trim())
+          .filter(k => k.length > 0);
+
+        // Map frontend Car interface to server expected format
+        const carData = {
+          name: data.name?.trim() || '',
+          brand: data.brand?.trim() || '',
+          brandId: data.brandId,
+          model: data.model?.trim() || data.name?.trim() || '',
+          originalPrice: data.originalPrice || 0,
+          discountedPrice: data.discountedPrice || 0,
+          images: data.images || [],
+          description: data.description || '',
+          keywords: processedKeywords,
+          features: data.features || [],
+          available: data.available ?? true,
+          featured: data.featured ?? false,
+          seater: data.seater,
+          carTypeIds: data.carTypeIds || [],
+          tagIds: data.tagIds || [],
+        };
+
+        await onSave(carData);
+        onOpenChange(false);
+        toast({
+          title: "Success",
+          description: car ? "Car updated successfully" : "Car created successfully",
+        });
+      } catch (error) {
+        handleApiError(error);
+        throw error;
+      }
+    }
+  });
   
   useEffect(() => {
     // Reset form data and preview images when car prop changes
-    setFormData(car || defaultCar);
-    setPreviewImages(car?.images || []);
-    setCoverImageIndex(0); // Reset cover image to first image
-    setTagsInput(car?.tags ? car.tags.join(', ') : '');
-    
-    // Ensure keywords are properly initialized
-    if (car?.keywords) {
-      setFormData(prev => ({
-        ...prev,
-        keywords: car.keywords
-      }));
+    if (open) {
+      reset();
+      setPreviewImages(car?.images || []);
+      setCoverImageIndex(0); // Reset cover image to first image
+      // setTagsInput(car?.tags ? car.tags.join(', ') : '');
+      clearApiError();
     }
-  }, [car]);
+  }, [open, car, reset, clearApiError]);
 
   // --- Brand API integration ---
   const { data: brands, loading: brandsLoading, error: brandsError } = useBrands({ limit: 100 });
-  const { data: categories, loading: categoriesLoading, error: categoriesError } = useCategories({ limit: 100 });
+  const { data: categories, loading: categoriesLoading } = useCategories({ limit: 100 });
   
   // Handle both response structures: { data: [...] } and { categories: [...] }
   const categoriesArray: Category[] = useMemo(() => {
@@ -94,8 +201,6 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
     return [];
   }, [categories]);
   const carTypeCategories: Category[] = categoriesArray.filter((cat) => cat.type === 'carType');
-  const fuelTypeCategories: Category[] = categoriesArray.filter((cat) => cat.type === 'fuelType');
-  const transmissionCategories: Category[] = categoriesArray.filter((cat) => cat.type === 'transmission');
   const tagCategories: Category[] = categoriesArray.filter((cat) => cat.type === 'tag');
   
 
@@ -151,39 +256,16 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
       );
 
       // Update form data with new image URLs
-      setFormData(prev => ({
-        ...prev,
-        images: [...(prev.images || []), ...uploadedUrls]
-      }));
+      setField('images', [...(formData.images || []), ...uploadedUrls]);
 
       // Clean up temporary preview URLs
       newPreviewUrls.forEach(URL.revokeObjectURL);
     } catch (error) {
       console.error('Error uploading images:', error);
-      
-      // Show user-friendly error message
-      let errorMessage = 'Failed to upload images. Please try again.';
-      
-      if (error instanceof Error) {
-        if (error.message.includes('Invalid file type')) {
-          errorMessage = 'One or more files have an unsupported format. Please use JPEG, JPG, PNG, or WebP files only.';
-        } else if (error.message.includes('File too large')) {
-          errorMessage = 'One or more files are too large. Maximum file size is 10MB.';
-        } else if (error.message.includes('Network') || error.message.includes('fetch')) {
-          errorMessage = 'Network error. Please check your internet connection and try again.';
-        } else if (error.message.includes('Unauthorized') || error.message.includes('401')) {
-          errorMessage = 'Authentication expired. Please log in again.';
-        } else if (error.message.includes('Forbidden') || error.message.includes('403')) {
-          errorMessage = 'You do not have permission to upload images.';
-        } else if (error.message.includes('413')) {
-          errorMessage = 'Files are too large. Please reduce file sizes and try again.';
-        } else {
-          errorMessage = `Upload failed: ${error.message}`;
-        }
-      }
+      const apiError = handleApiError(error);
       
       toast({
-        title: errorMessage,
+        title: apiError.message,
         variant: 'destructive',
       });
       
@@ -201,10 +283,7 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
 
   const removeImage = (index: number) => {
     setPreviewImages(prev => prev.filter((_, i) => i !== index));
-    setFormData(prev => ({
-      ...prev,
-      images: (prev.images || []).filter((_, i) => i !== index)
-    }));
+    setField('images', (formData.images || []).filter((_, i) => i !== index));
     // Adjust cover image index if the removed image was before it
     if (index < coverImageIndex) {
       setCoverImageIndex(prev => prev - 1);
@@ -224,7 +303,7 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
     const newFormImages = [...(formData.images || [])];
     const [selectedFormImage] = newFormImages.splice(index, 1);
     newFormImages.unshift(selectedFormImage);
-    setFormData(prev => ({ ...prev, images: newFormImages }));
+    setField('images', newFormImages);
     
     // Set cover image index to 0 (first position)
     setCoverImageIndex(0);
@@ -240,7 +319,7 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
     const newFormImages = [...(formData.images || [])];
     const [movedFormImage] = newFormImages.splice(fromIndex, 1);
     newFormImages.splice(toIndex, 0, movedFormImage);
-    setFormData(prev => ({ ...prev, images: newFormImages }));
+    setField('images', newFormImages);
     
     // Adjust cover image index
     if (fromIndex === coverImageIndex) {
@@ -253,128 +332,7 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate required fields with specific error messages
-    if (!formData.name?.trim()) {
-      toast({
-        title: 'Car name is required.',
-        description: 'Please enter a name for the vehicle.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    if (!formData.brand?.trim()) {
-      toast({
-        title: 'Brand is required.',
-        description: 'Please select a car brand.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    if (!formData.model?.trim()) {
-      toast({
-        title: 'Model is required.',
-        description: 'Please enter the car model.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    if (!formData.originalPrice || formData.originalPrice <= 0) {
-      toast({
-        title: 'Valid original price is required.',
-        description: 'Please enter a price greater than 0.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    if (formData.discountedPrice && formData.discountedPrice >= formData.originalPrice) {
-      toast({
-        title: 'Discounted price must be less than the original price.',
-        description: 'Please ensure the discounted price is lower than the original price.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    if (!formData.carTypeIds || formData.carTypeIds.length === 0) {
-      toast({
-        title: 'Car type is required.',
-        description: 'Please select at least one car type.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    if (!formData.images || formData.images.length === 0) {
-      toast({
-        title: 'At least one image is required.',
-        description: 'Please upload at least one car image.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    if (!formData.description?.trim()) {
-      toast({
-        title: 'Description is required.',
-        description: 'Please enter a description for the car.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    // Validate image URLs
-    const invalidImages = formData.images?.filter(img => !img || img.trim() === '');
-    if (invalidImages && invalidImages.length > 0) {
-      toast({
-        title: 'Some images have invalid URLs.',
-        description: 'Please check and fix the image uploads.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    // Ensure tags are synced before submit
-    const tagsArray = tagsInput.split(',').map(tag => tag.trim()).filter(Boolean);
-    
-    // Process keywords from raw input
-    const rawKeywords = formData.keywords?.[0] || '';
-    const processedKeywords = rawKeywords
-      .split(',')
-      .map(k => k.trim())
-      .filter(k => k.length > 0);
-    
-    // console.log('Raw keywords:', rawKeywords);
-    // console.log('Processed keywords:', processedKeywords);
-    
-    // Map frontend Car interface to server expected format
-    const carData = {
-      // Required fields for server
-      name: formData.name?.trim() || '',
-      brand: formData.brand?.trim() || '',
-      brandId: formData.brandId,
-      model: formData.model?.trim() || formData.name?.trim() || '',
-      // year: formData.year || new Date().getFullYear(),
-      originalPrice: formData.originalPrice || 0,
-      discountedPrice: formData.discountedPrice || 0,
-      // mileage: formData.mileage || 0,
-      images: formData.images || [],
-      description: formData.description || '',
-      keywords: processedKeywords,
-      features: formData.features || [],
-      available: formData.available ?? true,
-      featured: formData.featured ?? false,
-      // engine: formData.engine,
-      // power: formData.power,
-      seater: formData.seater,
-      carTypeIds: formData.carTypeIds || [],
-      // transmissionIds: formData.transmissionIds || [],
-      // fuelTypeIds: formData.fuelTypeIds || [],
-      tagIds: formData.tagIds || [],
-    };
-    
-    // console.log('Submitting car data with keywords:', carData.keywords);
-    // console.log('Full car data:', carData);
-    
-    await onSave(carData);
+    await handleFormSubmit(e);
   };
 
   const editor = useEditor({
@@ -390,18 +348,31 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
         placeholder: 'Enter car description... Use the toolbar above to format your text.',
       }),
     ],
-    content: formData.description || '',
+    content: '',
+    editable: !isSubmitting && !uploading,
     onUpdate: ({ editor }) => {
-      setFormData(prev => ({ ...prev, description: editor.getHTML() }));
+      setField('description', editor.getHTML());
     },
     immediatelyRender: false,
   });
 
   useEffect(() => {
-    if (editor && car?.description !== formData.description) {
-      editor.commands.setContent(car?.description || '');
+    if (editor && open) {
+      if (car?.description) {
+        // Set content when editing an existing car
+        editor.commands.setContent(car.description);
+      } else {
+        // Clear content when creating a new car
+        editor.commands.setContent('');
+      }
     }
-  }, [editor, car?.description]);
+  }, [editor, open, car?.description]);
+
+  useEffect(() => {
+    if (editor) {
+      editor.setEditable(!isSubmitting && !uploading);
+    }
+  }, [editor, isSubmitting, uploading]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -412,6 +383,15 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
             Fill in the car details below. All fields marked with * are required.
           </DialogDescription>
         </DialogHeader>
+
+        {apiError && (
+          <FormErrorDisplay 
+            error={apiError} 
+            onDismiss={clearApiError}
+            className="mb-4"
+          />
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Information */}
           <div className="space-y-4">
@@ -422,9 +402,12 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
                 <Input
                   id="name"
                   value={formData.name || ''}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) => setField('name', e.target.value)}
+                  className={errors.name ? 'border-destructive focus-visible:ring-destructive' : ''}
+                  disabled={isSubmitting || uploading}
                   required
                 />
+                <FieldError error={errors.name} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="brand" className="text-card-foreground">Brand *</Label>
@@ -432,15 +415,12 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
                   value={formData.brandId || ''}
                   onValueChange={(value) => {
                     const selectedBrand = (brands?.data as unknown as Brand[])?.find((b: Brand) => b.id === value);
-                    setFormData({
-                      ...formData,
-                      brand: selectedBrand?.name || '',
-                      brandId: selectedBrand?.id || ''
-                    });
+                    setField('brand', selectedBrand?.name || '');
+                    setField('brandId', selectedBrand?.id || '');
                   }}
-                  disabled={brandsLoading}
+                  disabled={brandsLoading || isSubmitting || uploading}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className={errors.brand ? 'border-destructive focus-visible:ring-destructive' : ''}>
                     <SelectValue placeholder={brandsLoading ? 'Loading brands...' : 'Select brand'} />
                   </SelectTrigger>
                   <SelectContent>
@@ -458,6 +438,7 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
                     ) : null}
                   </SelectContent>
                 </Select>
+                <FieldError error={errors.brand} />
               </div>
               {/* <div className="space-y-2">
                 <Label htmlFor="year" className="text-card-foreground">Year *</Label>
@@ -470,13 +451,16 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
                 />
               </div> */}
               <div className="space-y-2">
-                <Label htmlFor="model" className="text-card-foreground">Model</Label>
+                <Label htmlFor="model" className="text-card-foreground">Model *</Label>
                 <Input
                   id="model"
                   value={formData.model || ''}
-                  onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                  onChange={(e) => setField('model', e.target.value)}
+                  className={errors.model ? 'border-destructive focus-visible:ring-destructive' : ''}
+                  disabled={isSubmitting || uploading}
                   required
                 />
+                <FieldError error={errors.model} />
               </div>
               {/* <div className="space-y-2">
                 <Label htmlFor="mileage" className="text-card-foreground">Mileage *</Label>
@@ -511,7 +495,8 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
                   type="number"
                   min={1}
                   value={formData.seater || ''}
-                  onChange={(e) => setFormData({ ...formData, seater: parseInt(e.target.value) || undefined })}
+                  onChange={(e) => setField('seater', parseInt(e.target.value) || undefined)}
+                  disabled={isSubmitting || uploading}
                 />
               </div>
             </div>
@@ -523,13 +508,13 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
             <div className="grid grid-cols-2 gap-4">
               {/* Car Types dropdown single-select */}
               <div className="space-y-2">
-                <Label className="text-card-foreground">Car Type</Label>
+                <Label className="text-card-foreground">Car Type *</Label>
                 <Select
                   value={formData.carTypeIds?.[0] || ''}
-                  onValueChange={(value) => setFormData({ ...formData, carTypeIds: [value] })}
-                  disabled={categoriesLoading}
+                  onValueChange={(value) => setField('carTypeIds', [value])}
+                  disabled={categoriesLoading || isSubmitting || uploading}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className={errors.carTypeIds ? 'border-destructive focus-visible:ring-destructive' : ''}>
                     <SelectValue placeholder={categoriesLoading ? 'Loading car types...' : 'Select car type'} />
                   </SelectTrigger>
                   <SelectContent>
@@ -540,6 +525,7 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
                     ))}
                   </SelectContent>
                 </Select>
+                <FieldError error={errors.carTypeIds} />
               </div>
 
               {/* Transmission dropdown single-select */}
@@ -596,12 +582,11 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
                         onChange={(e) => {
                           const checked = e.target.checked;
                           if (!cat.id) return;
-                          setFormData((prev) => ({
-                            ...prev,
-                            tagIds: checked
-                              ? [...((prev.tagIds || []).filter((id): id is string => !!id)), cat.id as string]
-                              : (prev.tagIds || []).filter((id): id is string => !!id && id !== cat.id),
-                          }));
+                          const currentTagIds = formData.tagIds || [];
+                          const newTagIds = checked
+                            ? [...currentTagIds.filter((id): id is string => !!id), cat.id as string]
+                            : currentTagIds.filter((id): id is string => !!id && id !== cat.id);
+                          setField('tagIds', newTagIds);
                         }}
                       />
                       {cat.name}
@@ -622,9 +607,12 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
                   id="originalPrice"
                   type="number"
                   value={formData.originalPrice || ''}
-                  onChange={(e) => setFormData({ ...formData, originalPrice: parseFloat(e.target.value) || 0 })}
+                  onChange={(e) => setField('originalPrice', parseFloat(e.target.value) || 0)}
+                  className={errors.originalPrice ? 'border-destructive focus-visible:ring-destructive' : ''}
+                  disabled={isSubmitting || uploading}
                   required
                 />
+                <FieldError error={errors.originalPrice} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="discountedPrice" className="text-card-foreground">Discounted Price</Label>
@@ -632,8 +620,11 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
                   id="discountedPrice"
                   type="number"
                   value={formData.discountedPrice || ''}
-                  onChange={(e) => setFormData({ ...formData, discountedPrice: parseFloat(e.target.value) || 0 })}
+                  onChange={(e) => setField('discountedPrice', parseFloat(e.target.value) || 0)}
+                  className={errors.discountedPrice ? 'border-destructive focus-visible:ring-destructive' : ''}
+                  disabled={isSubmitting || uploading}
                 />
+                <FieldError error={errors.discountedPrice} />
               </div>
             </div>
           </div>
@@ -646,7 +637,8 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
                 <Switch
                   id="isAvailable"
                   checked={formData.available ?? true}
-                  onCheckedChange={(checked) => setFormData({ ...formData, available: checked })}
+                  onCheckedChange={(checked) => setField('available', checked)}
+                  disabled={isSubmitting || uploading}
                 />
                 <Label htmlFor="isAvailable" className="text-card-foreground">Available for Rent</Label>
               </div>
@@ -654,7 +646,8 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
                 <Switch
                   id="isFeatured"
                   checked={formData.featured ?? false}
-                  onCheckedChange={(checked) => setFormData({ ...formData, featured: checked })}
+                  onCheckedChange={(checked) => setField('featured', checked)}
+                  disabled={isSubmitting || uploading}
                 />
                 <Label htmlFor="isFeatured" className="text-card-foreground">Featured</Label>
               </div>
@@ -666,7 +659,7 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
           {/* Images */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-card-foreground">Car Images</h3>
+              <h3 className="text-lg font-semibold text-card-foreground">Car Images *</h3>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <span className="w-2 h-2 bg-primary rounded-full"></span>
@@ -849,11 +842,12 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
                 </div>
               </div>
             )}
+            <FieldError error={errors.images} />
           </div>
 
           {/* Description */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-card-foreground">Description</h3>
+            <h3 className="text-lg font-semibold text-card-foreground">Description *</h3>
             <div className="space-y-2">
               {/* TipTap Editor Toolbar */}
               <div className="border border-input rounded-t-md p-2 bg-muted/50 flex flex-wrap gap-1">
@@ -983,7 +977,9 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
               </div>
               
               {/* TipTap Editor Content */}
-              <div className="border border-input rounded-b-md bg-background">
+              <div className={`border rounded-b-md bg-background ${
+                errors.description ? 'border-destructive' : 'border-input'
+              }`}>
                 <EditorContent 
                   editor={editor} 
                   className="min-h-[128px] max-h-[300px] overflow-y-auto p-3 focus:outline-none"
@@ -1010,6 +1006,7 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
                 Use the toolbar above to format your text. The content will be saved as HTML.
               </p>
             </div>
+            <FieldError error={errors.description} />
           </div>
 
           {/* Keywords */}
@@ -1022,10 +1019,8 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
                 value={formData.keywords?.join(', ') || ''}
                 onChange={(e) => {
                   const inputValue = e.target.value;
-                  // console.log('Keywords input value:', inputValue);
-                  
                   // Store the raw input as a single string for now
-                  setFormData({ ...formData, keywords: [inputValue] });
+                  setField('keywords', [inputValue]);
                 }}
                 className="min-h-[80px]"
               />
@@ -1043,7 +1038,25 @@ export function CarDialog({ car, open, onOpenChange, onSave }: CarDialogProps) {
 
 
           <DialogFooter>
-            <Button type="submit">Save Car</Button>
+            <Button 
+              type="submit" 
+              disabled={!isValid || isSubmitting || uploading}
+              className="flex items-center gap-2"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Saving...
+                </>
+              ) : uploading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                'Save Car'
+              )}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

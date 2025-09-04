@@ -14,6 +14,15 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
+export interface CursorPaginatedResponse<T> {
+  data: T[];
+  nextCursor?: string;
+  prevCursor?: string;
+  hasNext: boolean;
+  hasPrev: boolean;
+  total: number;
+}
+
 class FrontendServices {
   private baseURL: string;
 
@@ -107,6 +116,33 @@ class FrontendServices {
     return this.request<PaginatedResponse<Record<string, unknown>>>(endpoint);
   }
 
+  // Cursor-based pagination for cars
+  async getCarsCursor(params?: {
+    search?: string;
+    brand?: string;
+    category?: string;
+    categoryId?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    cursor?: string;
+    limit?: number;
+    featured?: boolean;
+  }) {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          searchParams.append(key, value.toString());
+        }
+      });
+    }
+    
+    const queryString = searchParams.toString();
+    const endpoint = `/cars/cursor${queryString ? `?${queryString}` : ''}`;
+    
+    return this.request<CursorPaginatedResponse<Record<string, unknown>>>(endpoint);
+  }
+
   async getCar(id: string) {
     return this.request<Record<string, unknown>>(`/cars/${id}`);
   }
@@ -121,15 +157,7 @@ class FrontendServices {
     });
   }
 
-  async updateCar(id: string, carData: Record<string, unknown>, token: string) {
-    return this.request<Record<string, unknown>>(`/cars/${id}`, {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(carData),
-    });
-  }
+
 
   async deleteCar(id: string, token: string) {
     return this.request<{ message: string }>(`/cars/${id}`, {
@@ -160,6 +188,28 @@ class FrontendServices {
     const endpoint = `/brands${queryString ? `?${queryString}` : ''}`;
     
     return this.request<PaginatedResponse<Record<string, unknown>>>(endpoint);
+  }
+
+  // Cursor-based pagination for brands
+  async getBrandsCursor(params?: {
+    search?: string;
+    featured?: boolean;
+    cursor?: string;
+    limit?: number;
+  }) {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          searchParams.append(key, value.toString());
+        }
+      });
+    }
+    
+    const queryString = searchParams.toString();
+    const endpoint = `/brands/cursor${queryString ? `?${queryString}` : ''}`;
+    
+    return this.request<CursorPaginatedResponse<Record<string, unknown>>>(endpoint);
   }
 
   async getBrand(id: string) {
@@ -218,6 +268,29 @@ class FrontendServices {
     return this.request<PaginatedResponse<Record<string, unknown>>>(endpoint);
   }
 
+  // Cursor-based pagination for categories
+  async getCategoriesCursor(params?: {
+    search?: string;
+    type?: string;
+    featured?: boolean;
+    cursor?: string;
+    limit?: number;
+  }) {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          searchParams.append(key, value.toString());
+        }
+      });
+    }
+    
+    const queryString = searchParams.toString();
+    const endpoint = `/categories/cursor${queryString ? `?${queryString}` : ''}`;
+    
+    return this.request<CursorPaginatedResponse<Record<string, unknown>>>(endpoint);
+  }
+
   async getCategoriesWithCarCounts() {
     return this.request<{ categories: Record<string, unknown>[] }>('/categories?withCarCounts=true');
   }
@@ -266,6 +339,97 @@ class FrontendServices {
         Authorization: `Bearer ${token}`,
       },
       body: formData,
+    });
+  }
+
+  // Reviews API
+  async getReviews(params?: {
+    carId?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          searchParams.append(key, value.toString());
+        }
+      });
+    }
+    
+    const queryString = searchParams.toString();
+    const endpoint = `/reviews${queryString ? `?${queryString}` : ''}`;
+    
+    return this.request<PaginatedResponse<Record<string, unknown>>>(endpoint);
+  }
+
+  // Cursor-based pagination for reviews
+  async getReviewsCursor(params?: {
+    carId?: string;
+    cursor?: string;
+    limit?: number;
+  }) {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          searchParams.append(key, value.toString());
+        }
+      });
+    }
+    
+    const queryString = searchParams.toString();
+    const endpoint = `/reviews/cursor${queryString ? `?${queryString}` : ''}`;
+    
+    return this.request<CursorPaginatedResponse<Record<string, unknown>>>(endpoint);
+  }
+
+  async getReview(id: string) {
+    return this.request<Record<string, unknown>>(`/reviews/${id}`);
+  }
+
+  async createReview(reviewData: {
+    carId: string;
+    userName: string;
+    userEmail?: string;
+    rating: number;
+    title: string;
+    comment: string;
+  }) {
+    return this.request<Record<string, unknown>>('/reviews', {
+      method: 'POST',
+      body: JSON.stringify(reviewData),
+    });
+  }
+
+  async updateReview(id: string, reviewData: {
+    userName?: string;
+    userEmail?: string;
+    rating?: number;
+    title?: string;
+    comment?: string;
+  }) {
+    return this.request<Record<string, unknown>>(`/reviews/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(reviewData),
+    });
+  }
+
+  async deleteReview(id: string) {
+    return this.request<{ message: string }>(`/reviews/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getReviewStats(carId: string) {
+    return this.request<Record<string, unknown>>(`/reviews/stats/${carId}`);
+  }
+
+  // Car mutations
+  async updateCar(id: string, updates: Record<string, unknown>) {
+    return this.request<Record<string, unknown>>(`/cars/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
     });
   }
 }

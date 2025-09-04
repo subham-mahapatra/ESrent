@@ -15,7 +15,8 @@ import {
   MessageSquare,
   Building2,
   Crown,
-  Sparkles
+  Sparkles,
+  Video
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -44,18 +45,24 @@ const menuItems = [
     icon: Tag,
     description: 'Vehicle Types'
   },
-  { 
-    name: 'Reviews', 
-    href: '/admin/reviews', 
-    icon: MessageSquare,
-    description: 'Customer Feedback'
-  },
-  { 
-    name: 'Settings', 
-    href: '/admin/settings', 
-    icon: Settings,
-    description: 'System Configuration'
-  },
+          { 
+          name: 'Reviews', 
+          href: '/admin/reviews', 
+          icon: MessageSquare,
+          description: 'Customer Feedback'
+        },
+        { 
+          name: 'Video Testimonials', 
+          href: '/admin/video-testimonials', 
+          icon: Video,
+          description: 'Video Customer Reviews'
+        },
+        { 
+          name: 'Settings', 
+          href: '/admin/settings', 
+          icon: Settings,
+          description: 'System Configuration'
+        },
 ];
 
 export function Sidebar() {

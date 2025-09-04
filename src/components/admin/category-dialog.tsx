@@ -13,6 +13,11 @@ import { AlertCircle, Upload, X, Loader2 } from 'lucide-react';
 import { uploadImage } from '@/lib/cloudinary';
 import { Textarea } from '@/components/ui/textarea';
 import Image from 'next/image';
+import { FormErrorDisplay, FieldError } from '@/components/ui/form-error';
+import { useFormValidation } from '@/hooks/useFormValidation';
+import { commonValidationRules } from '@/components/ui/form-validation';
+import { useApiError } from '@/hooks/useApiError';
+import { useToast } from '@/components/hooks/use-toast';
 
 interface CategoryDialogProps {
   open: boolean;
@@ -22,56 +27,97 @@ interface CategoryDialogProps {
 }
 
 export function CategoryDialog({ open, onOpenChange, category, onSave }: CategoryDialogProps) {
-  const [formData, setFormData] = useState<Partial<Category>>(
-    category || {
+  const [previewUrl, setPreviewUrl] = useState<string | undefined>(undefined);
+  const [isUploading, setIsUploading] = useState(false);
+  const { toast } = useToast();
+  const { error: apiError, handleApiError, clearError: clearApiError } = useApiError();
+
+  const validationRules = {
+    name: {
+      ...commonValidationRules.required('Category name is required'),
+      ...commonValidationRules.minLength(2, 'Category name must be at least 2 characters'),
+      ...commonValidationRules.maxLength(50, 'Category name must be no more than 50 characters')
+    },
+    type: {
+      ...commonValidationRules.required('Category type is required')
+    },
+    slug: {
+      ...commonValidationRules.required('Slug is required'),
+      ...commonValidationRules.slug('Slug can only contain lowercase letters, numbers, and hyphens'),
+      ...commonValidationRules.minLength(2, 'Slug must be at least 2 characters'),
+      ...commonValidationRules.maxLength(50, 'Slug must be no more than 50 characters')
+    },
+    description: {
+      ...commonValidationRules.maxLength(500, 'Description must be no more than 500 characters')
+    }
+  };
+
+  const {
+    data: formData,
+    errors,
+    isSubmitting,
+    isValid,
+    setField,
+    setError,
+    clearError,
+    handleSubmit: handleFormSubmit,
+    reset
+  } = useFormValidation({
+    initialData: category || {
       name: '',
-      type: 'carType',
+      type: 'carType' as const,
       slug: '',
       featured: false,
       image: '',
       description: '',
+    },
+    validationRules,
+    onSubmit: async (data) => {
+      try {
+        await onSave(data as Category);
+        onOpenChange(false);
+        toast({
+          title: "Success",
+          description: category ? "Category updated successfully" : "Category created successfully",
+        });
+      } catch (error) {
+        handleApiError(error);
+        throw error; // Re-throw to prevent form from thinking it succeeded
+      }
     }
-  );
-  const [previewUrl, setPreviewUrl] = useState<string | undefined>(undefined);
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  });
 
   useEffect(() => {
     if (open) {
-      setFormData(category || {
-        name: '',
-        type: 'carType',
-        slug: '',
-        featured: false,
-        image: '',
-        description: '',
-      });
+      reset();
       setPreviewUrl(category?.image === null ? undefined : category?.image);
-      setError(null);
-      setIsSubmitting(false);
+      clearApiError();
     }
-  }, [open, category]);
+  }, [open, category, reset, clearApiError]);
 
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     // Validate file type
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      setError('Invalid file type. Only JPEG, PNG and WebP are allowed.');
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setError('image', 'Invalid file type. Only JPEG, JPG, PNG, and WebP are allowed.');
       return;
     }
+
     // Validate file size (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setError('File size exceeds 5MB limit.');
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setError('image', 'File size must be less than 5MB.');
       return;
     }
+
+    setIsUploading(true);
+    clearError('image');
+    clearApiError();
 
     try {
-      setIsUploading(true);
-      setError(null);
-
       // Create temporary preview
       const newPreviewUrl = URL.createObjectURL(file);
       setPreviewUrl(newPreviewUrl);
@@ -82,20 +128,22 @@ export function CategoryDialog({ open, onOpenChange, category, onSave }: Categor
       const imageUrl = await uploadImage(file, `categories/${categoryId}/image`, token);
 
       // Update form data with the new image URL
-      setFormData(prev => ({
-        ...prev,
-        image: imageUrl
-      }));
+      setField('image', imageUrl);
 
       // Clean up preview URL
       URL.revokeObjectURL(newPreviewUrl);
+
+      toast({
+        title: "Success",
+        description: "Image uploaded successfully",
+      });
     } catch (error: unknown) {
       console.error('Error uploading image:', error);
-      if (typeof error === 'object' && error && 'message' in error && typeof (error as { message?: unknown }).message === 'string') {
-        setError((error as { message: string }).message);
-      } else {
-        setError('Failed to upload image');
-      }
+      const apiError = handleApiError(error);
+      setError('image', apiError.message);
+      
+      // Remove preview if upload failed
+      setPreviewUrl(category?.image === null ? undefined : category?.image);
     } finally {
       setIsUploading(false);
     }
@@ -103,74 +151,30 @@ export function CategoryDialog({ open, onOpenChange, category, onSave }: Categor
 
   const handleRemoveImage = () => {
     setPreviewUrl(undefined);
-    setFormData(prev => ({ ...prev, image: '' }));
+    setField('image', '');
+    clearError('image');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setIsSubmitting(true);
-
-    try {
-      // Validate required fields
-      if (!formData.name?.trim()) {
-        throw new Error('Name is required');
-      }
-      if (!formData.type) {
-        throw new Error('Type is required');
-      }
-      if (!formData.slug?.trim()) {
-        throw new Error('Slug is required');
-      }
-
-      // Prepare category data
-      const categoryData: Partial<Category> = {
-        name: formData.name.trim(),
-        type: formData.type,
-        slug: formData.slug.trim(),
-        featured: formData.featured || false,
-        description: formData.description?.trim() || '',
-        image: formData.image || ''
-      };
-
-      // Submit the category data
-      await onSave(categoryData);
-      onOpenChange(false);
-    } catch (error: unknown) {
-      console.error('Form submission error:', error);
-      if (typeof error === 'object' && error && 'message' in error && typeof (error as { message?: unknown }).message === 'string') {
-        setError((error as { message: string }).message);
-      } else {
-        setError('Failed to save category');
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
+    await handleFormSubmit(e);
   };
 
   const handleInputChange = (field: keyof Category, value: string | boolean) => {
-    setFormData((prev) => {
-      const updates: Partial<Category> = {
-        ...prev,
-        [field]: value,
-      };
+    setField(field, value);
 
-      // Always auto-generate slug from name when name changes, unless slug was manually edited
-      if (field === 'name' && typeof value === 'string') {
-        const autoSlug = value
-          .toLowerCase()
-          .trim()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-+|-+$/g, '');
-        
-        // Only update slug if it's empty or was auto-generated from previous name
-        if (!prev.slug || prev.slug === prev.name?.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')) {
-          updates.slug = autoSlug;
-        }
+    // Always auto-generate slug from name when name changes, unless slug was manually edited
+    if (field === 'name' && typeof value === 'string') {
+      const autoSlug = value
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+      
+      // Only update slug if it's empty or was auto-generated from previous name
+      if (!formData.slug || formData.slug === formData.name?.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')) {
+        setField('slug', autoSlug);
       }
-
-      return updates;
-    });
+    }
   };
 
   return (
@@ -183,33 +187,36 @@ export function CategoryDialog({ open, onOpenChange, category, onSave }: Categor
           </p>
         </DialogHeader>
 
-        {error && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
+        {apiError && (
+          <FormErrorDisplay 
+            error={apiError} 
+            onDismiss={clearApiError}
+            className="mb-4"
+          />
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name" className="text-card-foreground">Name</Label>
+            <Label htmlFor="name" className="text-card-foreground">Name *</Label>
             <Input
               id="name"
               value={formData.name || ''}
               onChange={(e) => handleInputChange('name', e.target.value)}
               placeholder="Enter category name"
-              disabled={isSubmitting}
+              className={errors.name ? 'border-destructive focus-visible:ring-destructive' : ''}
+              disabled={isSubmitting || isUploading}
             />
+            <FieldError error={errors.name} />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="type" className="text-card-foreground">Type</Label>
+            <Label htmlFor="type" className="text-card-foreground">Type *</Label>
             <Select
               value={formData.type}
               onValueChange={(value) => handleInputChange('type', value)}
-              disabled={isSubmitting}
+              disabled={isSubmitting || isUploading}
             >
-              <SelectTrigger>
+              <SelectTrigger className={errors.type ? 'border-destructive focus-visible:ring-destructive' : ''}>
                 <SelectValue placeholder="Select category type" />
               </SelectTrigger>
               <SelectContent>
@@ -219,17 +226,20 @@ export function CategoryDialog({ open, onOpenChange, category, onSave }: Categor
                 <SelectItem value="tag">Tag</SelectItem>
               </SelectContent>
             </Select>
+            <FieldError error={errors.type} />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="slug" className="text-card-foreground">Slug</Label>
+            <Label htmlFor="slug" className="text-card-foreground">Slug *</Label>
             <Input
               id="slug"
               value={formData.slug || ''}
               onChange={(e) => handleInputChange('slug', e.target.value)}
               placeholder="category-slug"
-              disabled={isSubmitting}
+              className={errors.slug ? 'border-destructive focus-visible:ring-destructive' : ''}
+              disabled={isSubmitting || isUploading}
             />
+            <FieldError error={errors.slug} />
           </div>
 
           <div className="space-y-2">
@@ -239,9 +249,10 @@ export function CategoryDialog({ open, onOpenChange, category, onSave }: Categor
               value={formData.description || ''}
               onChange={(e) => handleInputChange('description', e.target.value)}
               placeholder="Enter category description (optional)"
-              disabled={isSubmitting}
-              className="min-h-[100px]"
+              className={`min-h-[100px] ${errors.description ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+              disabled={isSubmitting || isUploading}
             />
+            <FieldError error={errors.description} />
           </div>
 
           <div className="space-y-2">
@@ -280,7 +291,7 @@ export function CategoryDialog({ open, onOpenChange, category, onSave }: Categor
                   <input
                     id="image-upload"
                     type="file"
-                    accept="image/jpeg,image/png,image/webp"
+                    accept="image/jpeg,image/jpg,image/png,image/webp"
                     onChange={handleImageSelect}
                     className="sr-only"
                     disabled={isSubmitting || isUploading}
@@ -288,6 +299,10 @@ export function CategoryDialog({ open, onOpenChange, category, onSave }: Categor
                 </div>
               )}
             </div>
+            <p className="text-xs text-muted-foreground">
+              Supported formats: JPEG, JPG, PNG, WebP (max 5MB)
+            </p>
+            <FieldError error={errors.image} />
           </div>
 
           <div className="flex items-center space-x-2">
@@ -295,7 +310,7 @@ export function CategoryDialog({ open, onOpenChange, category, onSave }: Categor
               id="featured"
               checked={formData.featured || false}
               onCheckedChange={(checked) => handleInputChange('featured', checked)}
-              disabled={isSubmitting}
+              disabled={isSubmitting || isUploading}
             />
             <Label htmlFor="featured" className="text-card-foreground">Featured</Label>
           </div>
@@ -311,9 +326,22 @@ export function CategoryDialog({ open, onOpenChange, category, onSave }: Categor
             </Button>
             <Button 
               type="submit" 
-              disabled={isSubmitting || isUploading}
+              disabled={!isValid || isSubmitting || isUploading}
+              className="flex items-center gap-2"
             >
-              {isSubmitting ? 'Saving...' : isUploading ? 'Uploading...' : 'Save'}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Saving...
+                </>
+              ) : isUploading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                'Save'
+              )}
             </Button>
           </div>
         </form>
