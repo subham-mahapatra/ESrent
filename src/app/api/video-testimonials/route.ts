@@ -48,19 +48,15 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     
     // Extract form fields
-    const userName = formData.get('userName') as string;
-    const userRole = formData.get('userRole') as string;
-    const userCompany = formData.get('userCompany') as string;
-    const rating = parseInt(formData.get('rating') as string);
     const title = formData.get('title') as string;
     const comment = formData.get('comment') as string;
     const videoFile = formData.get('video') as File;
     const thumbnailFile = formData.get('thumbnail') as File;
     
     // Validate required fields
-    if (!userName || !title || !comment || !videoFile) {
+    if (!title || !comment || !videoFile) {
       return NextResponse.json(
-        { success: false, error: 'Missing required fields' },
+        { success: false, error: 'Missing required fields: title, comment, and video are required' },
         { status: 400 }
       );
     }
@@ -99,10 +95,6 @@ export async function POST(request: NextRequest) {
     
     // Create video testimonial
     const videoTestimonial = new VideoTestimonial({
-      userName,
-      // userRole removed
-      userCompany: userCompany || undefined,
-      // rating removed
       title,
       comment,
       videoUrl: videoResult.secure_url,

@@ -16,26 +16,15 @@ import {
   Edit, 
   Trash2, 
   Eye, 
-  EyeOff, 
-  CheckCircle, 
-  XCircle,
   Video,
-  User,
-  MessageSquare,
   Calendar,
   Star,
-  ShieldCheck,
-  ShieldAlert,
   Loader2
 } from 'lucide-react';
 import { toast } from '@/components/hooks/use-toast';
-import { FormErrorDisplay } from '@/components/ui/form-error';
-import { useApiError } from '@/hooks/useApiError';
 
 interface VideoTestimonial {
   _id: string;
-  userName: string;
-  userCompany?: string;
   title: string;
   comment: string;
   videoUrl: string;
@@ -47,8 +36,6 @@ interface VideoTestimonial {
 }
 
 interface VideoTestimonialForm {
-  userName: string;
-  userCompany: string;
   title: string;
   comment: string;
   videoFile?: File;
@@ -64,12 +51,9 @@ export default function VideoTestimonialsPage() {
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | undefined>(undefined);
   const [thumbnailPreviewUrl, setThumbnailPreviewUrl] = useState<string | undefined>(undefined);
   const [formData, setFormData] = useState<VideoTestimonialForm>({
-    userName: '',
-    userCompany: '',
     title: '',
     comment: '',
   });
-  const { error: apiError, handleApiError, clearError: clearApiError } = useApiError();
 
   // Fetch video testimonials
   const fetchVideoTestimonials = async () => {
@@ -84,10 +68,9 @@ export default function VideoTestimonialsPage() {
       }
     } catch (error) {
       console.error('Error fetching video testimonials:', error);
-      const apiError = handleApiError(error);
       toast({
         title: "Error",
-        description: apiError.message,
+        description: "Failed to fetch video testimonials",
         variant: "destructive",
       });
     } finally {
@@ -170,8 +153,6 @@ export default function VideoTestimonialsPage() {
   // Reset form
   const resetForm = () => {
     setFormData({
-      userName: '',
-      userCompany: '',
       title: '',
       comment: '',
     });
@@ -199,10 +180,6 @@ export default function VideoTestimonialsPage() {
       setIsUploading(true);
       
       const formDataToSend = new FormData();
-      formDataToSend.append('userName', formData.userName);
-      // userRole removed
-      formDataToSend.append('userCompany', formData.userCompany);
-      // rating removed
       formDataToSend.append('title', formData.title);
       formDataToSend.append('comment', formData.comment);
       formDataToSend.append('video', formData.videoFile);
@@ -325,8 +302,6 @@ export default function VideoTestimonialsPage() {
   const handleEdit = (testimonial: VideoTestimonial) => {
     setEditingTestimonial(testimonial);
     setFormData({
-      userName: testimonial.userName,
-      userCompany: testimonial.userCompany || '',
       title: testimonial.title,
       comment: testimonial.comment,
     });
@@ -419,32 +394,6 @@ export default function VideoTestimonialsPage() {
             </DialogHeader>
             
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="userName">Customer Name *</Label>
-                  <Input
-                    id="userName"
-                    value={formData.userName}
-                    onChange={(e) => handleInputChange('userName', e.target.value)}
-                    required
-                    placeholder="John Doe"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="userCompany">Company (Optional)</Label>
-                  <Input
-                    id="userCompany"
-                    value={formData.userCompany}
-                    onChange={(e) => handleInputChange('userCompany', e.target.value)}
-                    placeholder="Company Name"
-                  />
-                </div>
-              </div>
-              
-              {/* Role and rating removed */}
-              
-              
-              
               <div>
                 <Label htmlFor="title">Testimonial Title *</Label>
                 <Input
@@ -486,7 +435,7 @@ export default function VideoTestimonialsPage() {
                           onClick={() => {
                             if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
                             setVideoPreviewUrl(undefined);
-                            setFormData(prev => ({ ...prev, videoFile: undefined } as any));
+                            setFormData(prev => ({ ...prev, videoFile: undefined }));
                           }}
                           className="border-border/50"
                         >
@@ -559,7 +508,7 @@ export default function VideoTestimonialsPage() {
                           onClick={() => {
                             if (thumbnailPreviewUrl) URL.revokeObjectURL(thumbnailPreviewUrl);
                             setThumbnailPreviewUrl(undefined);
-                            setFormData(prev => ({ ...prev, thumbnailFile: undefined } as any));
+                            setFormData(prev => ({ ...prev, thumbnailFile: undefined }));
                           }}
                           className="border-border/50"
                         >
@@ -694,16 +643,6 @@ export default function VideoTestimonialsPage() {
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="min-w-0">
                         <h3 className="font-semibold text-sm sm:text-base truncate">{testimonial.title}</h3>
-                        <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
-                          <User className="h-4 w-4" />
-                          <span className="truncate">{testimonial.userName}</span>
-                          {testimonial.userCompany && (
-                            <>
-                              <span>•</span>
-                              <span className="truncate">{testimonial.userCompany}</span>
-                            </>
-                          )}
-                        </div>
                       </div>
                       <div className="flex items-center gap-2">
                         {getStatusBadge(testimonial)}
@@ -715,12 +654,6 @@ export default function VideoTestimonialsPage() {
                       <span>
                         {new Date(testimonial.createdAt).toLocaleDateString()}
                       </span>
-                      {testimonial.userCompany && (
-                        <>
-                          <span>•</span>
-                          <span>{testimonial.userCompany}</span>
-                        </>
-                      )}
                     </div>
                     <div className="mt-4 grid grid-cols-2 gap-2">
                       <Button

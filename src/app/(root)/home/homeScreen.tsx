@@ -7,6 +7,7 @@ import { FeaturedBrands } from "./components/FeaturedBrands"
 import { Categories } from "./components/Categories"
 import { FeaturedVehicles } from "./components/FeaturedVehicles"
 import TestimonialsSection from "./components/TestimonialsSection";
+import VideoTestimonialsSection from "./components/VideoTestimonialsSection";
 import { FaWhatsapp } from "react-icons/fa";
 import { HeroSection } from "./components/HeroSection";
 import DemoOne from '@/components/ui/demo';
@@ -134,6 +135,23 @@ function LandingSkeleton() {
         </div>
       </div>
 
+      {/* Video Testimonials heading & cards */}
+      <div className="px-1">
+        <Skeleton className="h-6 w-48 bg-gray-700 mb-4" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <Card key={`video-testi-skel-${i}`} className="overflow-hidden bg-gray-800/60 border-gray-700">
+              <Skeleton className="aspect-video w-full bg-gray-700" />
+              <div className="p-4 space-y-3">
+                <Skeleton className="h-3 w-full bg-gray-700" />
+                <Skeleton className="h-3 w-3/4 bg-gray-700" />
+                <Skeleton className="h-3 w-1/2 bg-gray-700" />
+              </div>
+            </Card>
+          ))}
+        </div>
+      </div>
+
       {/* Testimonials heading & cards */}
       <div className="px-1">
         <Skeleton className="h-6 w-48 bg-gray-700 mb-4" />
@@ -193,9 +211,6 @@ function FeaturedContent() {
   const brands = useMemo(() => brandsData?.data || [], [brandsData]);
   const categories = useMemo(() => categoriesData?.data || [], [categoriesData]);
 
-  // Check for loading state
-  const loading = carsLoading || brandsLoading || categoriesLoading;
-
   // Check for errors
   const errors = [carsError, brandsError, categoriesError].filter(Boolean);
   const hasErrors = errors.length > 0;
@@ -218,7 +233,6 @@ function FeaturedContent() {
     categories.filter(category => category && category.name), 
     [categories]
   );
-  // console.log("validCategories",validCategories)
 
   // Handle retry for all data
   const handleRetry = () => {
@@ -236,13 +250,21 @@ function FeaturedContent() {
     );
   }
 
-  if (loading) {
-    return <LandingSkeleton />;
-  }
-
   return (
     <>
-      {validBrands.length > 0 ? (
+      {/* Featured Brands Section */}
+      {brandsLoading ? (
+        <div className="px-1">
+          <Skeleton className="h-6 w-40 bg-gray-700 mb-3" />
+          <div className="flex gap-4 overflow-x-auto pb-2">
+            {[...Array(8)].map((_, i) => (
+              <Card key={`brand-skel-${i}`} className="w-40 h-24 flex-shrink-0 flex items-center justify-center bg-gray-800/60 border-gray-700">
+                <Skeleton className="w-16 h-16 rounded-full bg-gray-700" />
+              </Card>
+            ))}
+          </div>
+        </div>
+      ) : validBrands.length > 0 ? (
         <FeaturedBrands brands={validBrands as unknown as Brand[]} />
       ) : (
         <div className="mt-8 px-4 sm:px-6 pb-8">
@@ -250,7 +272,37 @@ function FeaturedContent() {
         </div>
       )}
       
-      {validCars.length > 0 ? (
+      {/* Featured Vehicles Section */}
+      {carsLoading ? (
+        <div className="px-1">
+          <Skeleton className="h-6 w-48 bg-gray-700 mb-4" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {[...Array(9)].map((_, i) => (
+              <Card key={`car-skel-${i}`} className="h-72 bg-gray-800/60 border-gray-700 flex flex-col">
+                <div className="relative">
+                  <Skeleton className="h-44 w-full rounded-t-xl bg-gray-700" />
+                  <div className="absolute top-3 left-3 flex gap-2">
+                    <Skeleton className="h-6 w-16 rounded-full bg-gray-600" />
+                    <Skeleton className="h-6 w-20 rounded-full bg-gray-600" />
+                  </div>
+                </div>
+                <div className="p-4 space-y-2">
+                  <Skeleton className="h-6 w-3/4 bg-gray-700" />
+                  <div className="flex gap-3">
+                    <Skeleton className="h-4 w-16 bg-gray-700" />
+                    <Skeleton className="h-4 w-16 bg-gray-700" />
+                    <Skeleton className="h-4 w-20 bg-gray-700" />
+                  </div>
+                  <div className="flex items-center justify-between pt-1">
+                    <Skeleton className="h-5 w-24 bg-gray-700" />
+                    <Skeleton className="h-9 w-24 bg-gray-700" />
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      ) : validCars.length > 0 ? (
         <FeaturedVehicles cars={validCars as unknown as Car[]} categories={validCategories as unknown as Category[]} />
       ) : (
         <div className="mt-8 px-4 sm:px-6 pb-8">
@@ -260,13 +312,25 @@ function FeaturedContent() {
       
       <DemoOne />
       
-      {validCategories.length > 0 ? (
+      {/* Categories Section */}
+      {categoriesLoading ? (
+        <div className="px-1">
+          <Skeleton className="h-6 w-40 bg-gray-700 mb-3" />
+          <div className="flex gap-3 overflow-x-auto pb-2">
+            {[...Array(12)].map((_, i) => (
+              <Skeleton key={`cat-chip-${i}`} className="h-9 w-28 rounded-full bg-gray-700" />
+            ))}
+          </div>
+        </div>
+      ) : validCategories.length > 0 ? (
         <Categories categories={validCategories as unknown as Category[]} />
       ) : (
         <div className="mt-8 px-4 sm:px-6 pb-8">
           <EmptyCategories />
         </div>
       )}
+      
+      <VideoTestimonialsSection limit={10} featuredOnly={true} />
       
       <TestimonialsSection />
     </>

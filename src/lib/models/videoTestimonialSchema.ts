@@ -1,8 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IVideoTestimonial extends Document {
-  userName: string;
-  userCompany?: string;
   title: string;
   comment: string;
   videoUrl: string;
@@ -14,19 +12,6 @@ export interface IVideoTestimonial extends Document {
 }
 
 const videoTestimonialSchema = new Schema<IVideoTestimonial>({
-  userName: {
-    type: String,
-    required: [true, 'Customer name is required'],
-    trim: true,
-    maxlength: [100, 'Customer name cannot exceed 100 characters']
-  },
-  // userRole removed (admin-only uploads)
-  userCompany: {
-    type: String,
-    trim: true,
-    maxlength: [100, 'Company name cannot exceed 100 characters']
-  },
-  // rating removed (admin-only uploads)
   title: {
     type: String,
     required: [true, 'Testimonial title is required'],
@@ -76,8 +61,6 @@ const videoTestimonialSchema = new Schema<IVideoTestimonial>({
 // Indexes for better query performance
 videoTestimonialSchema.index({ isFeatured: 1 });
 videoTestimonialSchema.index({ createdAt: -1 });
-videoTestimonialSchema.index({ userName: 1 });
-videoTestimonialSchema.index({ userCompany: 1 });
 
 // Virtual for formatted duration
 videoTestimonialSchema.virtual('formattedDuration').get(function() {
@@ -92,20 +75,17 @@ videoTestimonialSchema.virtual('status').get(function() {
   return this.isFeatured ? 'featured' : 'normal';
 });
 
-// Pre-save middleware to ensure only one featured testimonial per company (optional)
+// Pre-save middleware to ensure only one featured testimonial globally
 videoTestimonialSchema.pre('save', async function(next) {
   if (this.isFeatured && this.isModified('isFeatured')) {
-    // If this testimonial is being featured, unfeature others from the same company
-    if (this.userCompany) {
-      await (this.constructor as any).updateMany(
-        { 
-          userCompany: this.userCompany, 
-          _id: { $ne: this._id },
-          isFeatured: true 
-        },
-        { isFeatured: false }
-      );
-    }
+    // If this testimonial is being featured, unfeature all others
+    await (this.constructor as any).updateMany(
+      { 
+        _id: { $ne: this._id },
+        isFeatured: true 
+      },
+      { isFeatured: false }
+    );
   }
   next();
 });
@@ -116,12 +96,6 @@ videoTestimonialSchema.statics.getFeatured = function() {
     .sort({ createdAt: -1 });
 };
 
-// Static method to get testimonials by company
-videoTestimonialSchema.statics.getByCompany = function(company: string) {
-  return this.find({ 
-    userCompany: company
-  }).sort({ createdAt: -1 });
-};
 
 // Instance method to feature testimonial
 videoTestimonialSchema.methods.feature = function() {

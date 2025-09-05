@@ -46,19 +46,15 @@ export async function PUT(
     const formData = await request.formData();
     
     // Extract form fields
-    const userName = formData.get('userName') as string;
-    const userRole = formData.get('userRole') as string;
-    const userCompany = formData.get('userCompany') as string;
-    const rating = parseInt(formData.get('rating') as string);
     const title = formData.get('title') as string;
     const comment = formData.get('comment') as string;
     const videoFile = formData.get('video') as File;
     const thumbnailFile = formData.get('thumbnail') as File;
     
     // Validate required fields
-    if (!userName || !title || !comment) {
+    if (!title || !comment) {
       return NextResponse.json(
-        { success: false, error: 'Missing required fields' },
+        { success: false, error: 'Missing required fields: title and comment are required' },
         { status: 400 }
       );
     }
@@ -77,10 +73,6 @@ export async function PUT(
     
     // Update fields
     const updateData: any = {
-      userName,
-      // userRole removed
-      userCompany: userCompany || undefined,
-      // rating removed
       title,
       comment,
     };
