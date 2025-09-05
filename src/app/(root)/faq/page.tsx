@@ -1,11 +1,7 @@
-import { Metadata } from 'next';
-import { PageHeader } from '@/components/PageHeader';
-import { FAQItem } from './components/FAQItem';
+'use client';
 
-export const metadata: Metadata = {
-  title: 'FAQ - ES Rentals',
-  description: 'Frequently Asked Questions about ES Rentals luxury car rental services in Dubai',
-};
+import { Header } from '../home/components/Header';
+import { FAQItem } from './components/FAQItem';
 
 export default function FAQPage() {
   const faqs = [
@@ -36,27 +32,63 @@ export default function FAQPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-black">
-      <PageHeader title="FAQ" />
-      
-      <main className="max-w-2xl mx-auto px-4 py-6 sm:py-8 sm:px-6">
-        <div className="space-y-3">
-          {faqs.map((faq, index) => (
-            <FAQItem key={index} question={faq.question} answer={faq.answer} />
-          ))}
-        </div>
-
-        <div className="mt-10 bg-zinc-900 rounded-lg p-6 text-center border border-zinc-800">
-          <h2 className="text-lg font-medium text-white mb-2">Need more information?</h2>
-          <p className="text-sm text-zinc-300 mb-4">
-            Our luxury car rental experts are ready to assist you with any additional queries or special requests.
+    <div className="flex flex-col min-h-screen max-w-7xl mx-auto w-full">
+      <Header />
+      <main className="flex-1 max-w-7xl mx-auto w-full p-4">
+        {/* Hero Section */}
+        <div className="text-center mb-12">
+          <h1 className="heading-4 font-bold mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            Frequently Asked Questions
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Find answers to common questions about our luxury car rental services in Dubai
           </p>
-          <a 
-            href="/contact" 
-            className="inline-block bg-primary text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
-          >
-            Get in Touch
-          </a>
+        </div>
+        
+        {/* FAQ Section */}
+        <div className="max-w-4xl mx-auto">
+          <div className="space-y-4">
+            {faqs.map((faq, index) => (
+              <FAQItem key={index} question={faq.question} answer={faq.answer} />
+            ))}
+          </div>
+
+          {/* Contact Section */}
+          <div className="mt-16 bg-gradient-to-r from-primary/10 to-primary/5 rounded-2xl p-8 text-center border border-primary/20">
+            <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg
+                className="w-8 h-8 text-primary"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold mb-4">Still have questions?</h2>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              Our luxury car rental experts are ready to assist you with any additional queries or special requests.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <a 
+                href="/contact" 
+                className="inline-flex items-center justify-center bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors"
+              >
+                Contact Us
+              </a>
+              <a 
+                href="tel:+9714XXXXXXX" 
+                className="inline-flex items-center justify-center border border-primary text-primary px-6 py-3 rounded-lg font-medium hover:bg-primary/10 transition-colors"
+              >
+                Call Now
+              </a>
+            </div>
+          </div>
         </div>
       </main>
     </div>

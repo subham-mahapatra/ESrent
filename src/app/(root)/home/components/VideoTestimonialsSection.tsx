@@ -10,6 +10,7 @@ import {
   StoryOverlay,
   StoryVideo,
 } from '@/components/ui/stories-carousel';
+import { VideoThumbnail } from '@/components/ui/video-thumbnail';
 
 interface VideoTestimonial {
   _id: string;
@@ -283,10 +284,20 @@ const VideoTestimonialsSection = ({
                       className="aspect-[3/4] !w-[250px] cursor-pointer group"
                       onClick={() => handleVideoClick(testimonial)}
                     >
-                    <StoryVideo 
-                      src={testimonial.videoUrl} 
-                      poster={testimonial.thumbnailUrl}
-                    />
+                    <div className="relative w-full h-full">
+                      <VideoThumbnail
+                        videoUrl={testimonial.videoUrl}
+                        thumbnailUrl={testimonial.thumbnailUrl}
+                        alt="Video thumbnail"
+                        className="w-full h-full"
+                        time={1}
+                      />
+                      <StoryVideo 
+                        src={testimonial.videoUrl} 
+                        poster={testimonial.thumbnailUrl}
+                        className="absolute inset-0 w-full h-full"
+                      />
+                    </div>
                     <StoryOverlay side="top" />
                     {/* Play overlay - only show on hover */}
                     <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">

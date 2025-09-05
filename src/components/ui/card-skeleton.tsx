@@ -85,3 +85,54 @@ export function BrandDetailsSkeleton() {
     </div>
   )
 }
+
+export function BrandCardSkeleton() {
+  return (
+    <div className="group relative overflow-hidden rounded-xl bg-card border border-border/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+      <div className="p-6 flex flex-col items-center justify-center min-h-[120px]">
+        {/* Logo skeleton */}
+        <div className="w-16 h-16 relative mb-3">
+          <Skeleton className="w-full h-full rounded-lg" />
+        </div>
+        {/* Brand name skeleton */}
+        <Skeleton className="h-4 w-20 mb-2" />
+        {/* Additional shimmer effect */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+      </div>
+    </div>
+  )
+}
+
+export function BrandsPageSkeleton() {
+  return (
+    <div className="flex flex-col min-h-screen max-w-7xl mx-auto w-full">
+      {/* Header skeleton */}
+      <div className="h-16 bg-card border-b border-border/50">
+        <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
+          <Skeleton className="h-8 w-32" />
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-8 w-8 rounded-full" />
+          </div>
+        </div>
+      </div>
+      
+      <main className="flex-1 max-w-7xl mx-auto w-full p-4">
+        {/* Title skeleton */}
+        <div className="mb-8">
+          <Skeleton className="h-8 w-32 mb-2" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+        
+        {/* Brands grid skeleton */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          {Array.from({ length: 12 }).map((_, index) => (
+            <BrandCardSkeleton key={index} />
+          ))}
+        </div>
+      </main>
+    </div>
+  )
+}

@@ -22,6 +22,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { toast } from '@/components/hooks/use-toast';
+import { VideoThumbnail } from "@/components/ui/video-thumbnail";
 
 interface VideoTestimonial {
   _id: string;
@@ -592,13 +593,7 @@ export default function VideoTestimonialsPage() {
         {/* Pending card removed */}
 
       {/* Video Testimonials Grid */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Video Testimonials</CardTitle>
-          <CardDescription>
-            Manage and review customer video testimonials
-          </CardDescription>
-        </CardHeader>
+      <Card className='border border-border/50 rounded-xl p-2'>
         <CardContent>
           {videoTestimonials.length === 0 ? (
             <div className="text-center py-12">
@@ -617,17 +612,14 @@ export default function VideoTestimonialsPage() {
               {videoTestimonials.map((testimonial) => (
                 <Card key={testimonial._id} className="overflow-hidden group border border-border/50 rounded-xl">
                   <div className="relative h-40 w-full bg-muted">
-                    {testimonial.thumbnailUrl ? (
-                      <img
-                        src={testimonial.thumbnailUrl}
-                        alt="Video thumbnail"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Video className="h-8 w-8 text-muted-foreground" />
-                      </div>
-                    )}
+                    <VideoThumbnail
+                      videoUrl={testimonial.videoUrl}
+                      thumbnailUrl={testimonial.thumbnailUrl}
+                      alt="Video thumbnail"
+                      className="w-full h-full"
+                      time={1}
+                      fallbackIcon={<Video className="h-8 w-8 text-muted-foreground" />}
+                    />
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <div className="bg-black/60 rounded-full p-3">
                         <Play className="h-5 w-5 text-white" />
@@ -663,14 +655,6 @@ export default function VideoTestimonialsPage() {
                       >
                         <Eye className="h-4 w-4 mr-2" />
                         View
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(testimonial)}
-                      >
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit
                       </Button>
                       {/* Approval toggle removed */}
                       <Button
